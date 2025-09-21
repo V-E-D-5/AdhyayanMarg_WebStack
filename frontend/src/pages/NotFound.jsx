@@ -1,12 +1,12 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Home, ArrowLeft, Search } from 'lucide-react'
-import Button from '../components/UI/Button'
+import React from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Home, ArrowLeft, Search } from "lucide-react";
+import Button from "../components/UI/Button";
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center py-12">
       <div className="container-custom">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -22,9 +22,12 @@ const NotFound = () => {
           </div>
 
           {/* Error Message */}
-          <h1 className="heading-2 mb-4">Page Not Found</h1>
-          <p className="text-body mb-8">
-            Sorry, we couldn't find the page you're looking for. The page might have been moved, deleted, or you entered the wrong URL.
+          <h1 className="heading-2 mb-4 text-gray-900 dark:text-white">
+            Page Not Found
+          </h1>
+          <p className="text-body mb-8 text-gray-600 dark:text-gray-300">
+            Sorry, we couldn't find the page you're looking for. The page might
+            have been moved, deleted, or you entered the wrong URL.
           </p>
 
           {/* Action Buttons */}
@@ -47,42 +50,60 @@ const NotFound = () => {
 
           {/* Helpful Links */}
           <div className="mt-12">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Popular Pages</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Popular Pages
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link
                 to="/quiz"
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
-                <div className="text-sm font-medium text-gray-900">Career Quiz</div>
-                <div className="text-xs text-gray-600 mt-1">Find your path</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  Career Quiz
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  Find your path
+                </div>
               </Link>
               <Link
                 to="/roadmap"
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
-                <div className="text-sm font-medium text-gray-900">Roadmaps</div>
-                <div className="text-xs text-gray-600 mt-1">Career guides</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  Roadmaps
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  Career guides
+                </div>
               </Link>
               <Link
                 to="/colleges"
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
-                <div className="text-sm font-medium text-gray-900">Colleges</div>
-                <div className="text-xs text-gray-600 mt-1">Find colleges</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  Colleges
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  Find colleges
+                </div>
               </Link>
               <Link
                 to="/stories"
-                className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
               >
-                <div className="text-sm font-medium text-gray-900">Stories</div>
-                <div className="text-xs text-gray-600 mt-1">Success stories</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  Stories
+                </div>
+                <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                  Success stories
+                </div>
               </Link>
             </div>
           </div>
         </motion.div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

@@ -1,0 +1,5 @@
+# Include all files - no exclusions
+# This .gitignore file is intentionally minimal to track all files
+
+# Only exclude the .git directory itself
+.git/

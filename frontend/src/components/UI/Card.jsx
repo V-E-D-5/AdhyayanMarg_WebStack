@@ -1,70 +1,86 @@
-import React from 'react'
-import { cn } from '../../utils/helpers'
+import React from "react";
+import { cn } from "../../utils/helpers";
 
 const Card = ({
   children,
-  className = '',
+  className = "",
   hover = false,
-  padding = 'md',
+  padding = "md",
   ...props
 }) => {
   const paddingClasses = {
-    none: '',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-10'
-  }
+    none: "",
+    sm: "p-4",
+    md: "p-6",
+    lg: "p-8",
+    xl: "p-10",
+  };
 
   return (
     <div
       className={cn(
-        'bg-white rounded-xl shadow-soft border border-gray-100',
+        "bg-white dark:bg-gray-800 rounded-xl shadow-soft border border-gray-100 dark:border-gray-700",
         paddingClasses[padding],
-        hover && 'transition-all duration-200 hover:shadow-medium hover:-translate-y-1',
+        hover &&
+          "transition-all duration-200 hover:shadow-medium hover:-translate-y-1",
         className
       )}
       {...props}
     >
       {children}
     </div>
-  )
-}
+  );
+};
 
-const CardHeader = ({ children, className = '', ...props }) => (
-  <div className={cn('mb-4', className)} {...props}>
+const CardHeader = ({ children, className = "", ...props }) => (
+  <div className={cn("mb-4", className)} {...props}>
     {children}
   </div>
-)
+);
 
-const CardTitle = ({ children, className = '', ...props }) => (
-  <h3 className={cn('text-lg font-semibold text-gray-900', className)} {...props}>
+const CardTitle = ({ children, className = "", ...props }) => (
+  <h3
+    className={cn(
+      "text-lg font-semibold text-gray-900 dark:text-white",
+      className
+    )}
+    {...props}
+  >
     {children}
   </h3>
-)
+);
 
-const CardDescription = ({ children, className = '', ...props }) => (
-  <p className={cn('text-sm text-gray-600 mt-1', className)} {...props}>
+const CardDescription = ({ children, className = "", ...props }) => (
+  <p
+    className={cn("text-sm text-gray-600 dark:text-gray-300 mt-1", className)}
+    {...props}
+  >
     {children}
   </p>
-)
+);
 
-const CardContent = ({ children, className = '', ...props }) => (
-  <div className={cn('', className)} {...props}>
+const CardContent = ({ children, className = "", ...props }) => (
+  <div className={cn("", className)} {...props}>
     {children}
   </div>
-)
+);
 
-const CardFooter = ({ children, className = '', ...props }) => (
-  <div className={cn('mt-4 pt-4 border-t border-gray-100', className)} {...props}>
+const CardFooter = ({ children, className = "", ...props }) => (
+  <div
+    className={cn(
+      "mt-4 pt-4 border-t border-gray-100 dark:border-gray-700",
+      className
+    )}
+    {...props}
+  >
     {children}
   </div>
-)
+);
 
-Card.Header = CardHeader
-Card.Title = CardTitle
-Card.Description = CardDescription
-Card.Content = CardContent
-Card.Footer = CardFooter
+Card.Header = CardHeader;
+Card.Title = CardTitle;
+Card.Description = CardDescription;
+Card.Content = CardContent;
+Card.Footer = CardFooter;
 
-export default Card
+export default Card;

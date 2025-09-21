@@ -4,7 +4,6 @@
     "quiz": "Career Quiz",
     "roadmap": "Roadmap",
     "colleges": "Colleges",
-    "stories": "Success Stories",
     "chatbot": "Chatbot",
     "dashboard": "Dashboard",
     "language": "Language"
@@ -25,10 +24,6 @@
       "colleges": {
         "title": "College Finder",
         "description": "Find and compare colleges that match your goals"
-      },
-      "stories": {
-        "title": "Success Stories",
-        "description": "Learn from real people who achieved their dreams"
       }
     }
   },
@@ -111,6 +106,28 @@
     "colleges": "Colleges",
     "engagement": "User Engagement",
     "performance": "Content Performance"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signInSubtitle": "Welcome back! Please sign in to your account",
+    "createAccount": "Create Account",
+    "createAccountSubtitle": "Join us today! Create your account to get started",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "authenticating": "Authenticating...",
+    "pleaseWait": "Please wait while we authenticate you",
+    "authenticationSuccessful": "Authentication Successful!",
+    "authenticationFailed": "Authentication Failed",
+    "somethingWentWrong": "Something went wrong. Please try again.",
+    "returnHome": "Return Home",
+    "redirectingToDashboard": "Redirecting to dashboard..."
   },
   "common": {
     "loading": "Loading...",

@@ -1,0 +1,109 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bookGradient512" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </radialGradient>
+    <radialGradient id="leafGradient512" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#10b981" />
+    </radialGradient>
+    <filter id="shadow512" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="16" dy="32" stdDeviation="32" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#ffffff" />
+
+  <!-- Open Book with enhanced 3D effect and shadow -->
+  <path
+    d="M96 352C96 328 120 304 144 304H368C392 304 416 328 416 352V448C416 472 392 496 368 496H144C120 496 96 472 96 448V352Z"
+    fill="url(#bookGradient512)"
+    stroke="#d97706"
+    stroke-width="4.8"
+    filter="url(#shadow512)"
+  />
+  
+  <!-- Book pages with depth -->
+  <path
+    d="M112 368L400 368M112 400L400 400M112 432L400 432M112 464L400 464"
+    stroke="#d97706"
+    stroke-width="3.2"
+    opacity="0.6"
+  />
+
+  <!-- Book spine with shadow -->
+  <rect x="248" y="304" width="16" height="192" fill="#d97706" />
+  <rect x="251.2" y="304" width="4.8" height="192" fill="#92400e" opacity="0.5" />
+
+  <!-- Tree trunk with gradient -->
+  <rect x="240" y="352" width="32" height="96" fill="url(#bookGradient512)" />
+  <rect x="243.2" y="352" width="4.8" height="96" fill="#92400e" opacity="0.3" />
+
+  <!-- Main tree branches with enhanced styling -->
+  <path
+    d="M208 320L240 352L272 320L304 352L272 384L240 352Z"
+    fill="url(#bookGradient512)"
+    stroke="#d97706"
+    stroke-width="3.2"
+  />
+  <path
+    d="M192 288L224 320L256 288L288 320L256 352L224 320Z"
+    fill="url(#bookGradient512)"
+    stroke="#d97706"
+    stroke-width="3.2"
+  />
+  <path
+    d="M176 256L208 288L240 256L272 288L240 320L208 288Z"
+    fill="url(#bookGradient512)"
+    stroke="#d97706"
+    stroke-width="3.2"
+  />
+  <path
+    d="M160 224L192 256L224 224L256 256L224 288L192 256Z"
+    fill="url(#bookGradient512)"
+    stroke="#d97706"
+    stroke-width="3.2"
+  />
+
+  <!-- Tree leaves with gradient and depth - creating fuller canopy -->
+  <circle cx="160" cy="192" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="192" cy="160" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="224" cy="192" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="256" cy="160" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="288" cy="192" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="320" cy="160" r="28.8" fill="url(#leafGradient512)" />
+  <circle cx="352" cy="192" r="28.8" fill="url(#leafGradient512)" />
+  
+  <circle cx="176" cy="224" r="24" fill="url(#leafGradient512)" />
+  <circle cx="208" cy="224" r="24" fill="url(#leafGradient512)" />
+  <circle cx="240" cy="224" r="24" fill="url(#leafGradient512)" />
+  <circle cx="272" cy="224" r="24" fill="url(#leafGradient512)" />
+  <circle cx="304" cy="224" r="24" fill="url(#leafGradient512)" />
+  <circle cx="336" cy="224" r="24" fill="url(#leafGradient512)" />
+  
+  <circle cx="192" cy="256" r="19.2" fill="url(#leafGradient512)" />
+  <circle cx="224" cy="256" r="19.2" fill="url(#leafGradient512)" />
+  <circle cx="256" cy="256" r="19.2" fill="url(#leafGradient512)" />
+  <circle cx="288" cy="256" r="19.2" fill="url(#leafGradient512)" />
+  <circle cx="320" cy="256" r="19.2" fill="url(#leafGradient512)" />
+  
+  <circle cx="208" cy="288" r="16" fill="url(#leafGradient512)" />
+  <circle cx="240" cy="288" r="16" fill="url(#leafGradient512)" />
+  <circle cx="272" cy="288" r="16" fill="url(#leafGradient512)" />
+  <circle cx="304" cy="288" r="16" fill="url(#leafGradient512)" />
+  
+  <circle cx="224" cy="320" r="12.8" fill="url(#leafGradient512)" />
+  <circle cx="256" cy="320" r="12.8" fill="url(#leafGradient512)" />
+  <circle cx="288" cy="320" r="12.8" fill="url(#leafGradient512)" />
+
+  <!-- Subtle highlights on leaves for 3D effect -->
+  <circle cx="164.8" cy="184" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="196.8" cy="152" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="228.8" cy="184" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="260.8" cy="152" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="292.8" cy="184" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="324.8" cy="152" r="6.4" fill="#6ee7b7" opacity="0.6" />
+  <circle cx="356.8" cy="184" r="6.4" fill="#6ee7b7" opacity="0.6" />
+</svg>
