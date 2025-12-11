@@ -31,6 +31,7 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
+  Trophy,
 } from "lucide-react";
 import Card from "../components/UI/Card";
 import Button from "../components/UI/Button";
@@ -1263,6 +1264,7 @@ const Dashboard = () => {
     { id: "internships", label: "Internships", icon: Briefcase },
     { id: "scholarships", label: "Scholarships", icon: Award },
     { id: "courses", label: "Free Courses", icon: GraduationCap },
+    { id: "sports", label: "Sports", icon: Trophy },
   ];
 
   const handleApply = (type, id) => {
@@ -1313,7 +1315,7 @@ const Dashboard = () => {
         className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-4 sm:p-6 lg:p-8 text-white"
       >
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3">
-          Welcome back, {user?.name || "Student"}! 👋
+          Welcome, {user?.name || "Student"}! 👋
         </h2>
         <p className="text-primary-100 mb-4 sm:mb-6 text-sm sm:text-base leading-relaxed">
           Here's your personalized dashboard with all your learning progress and
@@ -2212,6 +2214,216 @@ const Dashboard = () => {
     </div>
   );
 
+  const renderSports = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <h3 className="text-xl font-semibold">Sports & Athletics</h3>
+        <div className="flex space-x-3">
+          <Input
+            placeholder="Search sports..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+            className="w-full md:w-64"
+          />
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="input w-full md:w-auto min-w-[150px]"
+          >
+            <option value="all">All Sports</option>
+            <option value="football">Football</option>
+            <option value="basketball">Basketball</option>
+            <option value="cricket">Cricket</option>
+            <option value="tennis">Tennis</option>
+            <option value="swimming">Swimming</option>
+            <option value="track">Track & Field</option>
+            <option value="badminton">Badminton</option>
+            <option value="volleyball">Volleyball</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          {
+            id: 1,
+            title: "Football Training Program",
+            organization: "Sports Academy",
+            description: "Professional football training with experienced coaches. Learn advanced techniques and strategies.",
+            duration: "3 months",
+            level: "Intermediate",
+            location: "Mumbai",
+            requirements: ["Age 16-25", "Basic fitness", "Football experience"],
+            benefits: ["Professional coaching", "Fitness training", "Tournament participation"],
+            image: "https://images.unsplash.com/photo-1431324155629-1a6ce1c6c6c6?w=400&h=300&fit=crop",
+          },
+          {
+            id: 2,
+            title: "Basketball Development Camp",
+            organization: "Youth Sports Foundation",
+            description: "Comprehensive basketball training focusing on fundamentals and advanced skills.",
+            duration: "2 months",
+            level: "Beginner",
+            location: "Delhi",
+            requirements: ["Age 14-22", "Interest in basketball"],
+            benefits: ["Skill development", "Team building", "Health benefits"],
+            image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=300&fit=crop",
+          },
+          {
+            id: 3,
+            title: "Cricket Coaching Academy",
+            organization: "National Cricket Institute",
+            description: "Professional cricket coaching with focus on batting, bowling, and fielding techniques.",
+            duration: "6 months",
+            level: "Advanced",
+            location: "Bangalore",
+            requirements: ["Age 15-30", "Cricket experience", "Physical fitness"],
+            benefits: ["Professional coaching", "Match practice", "Career guidance"],
+            image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=400&h=300&fit=crop",
+          },
+          {
+            id: 4,
+            title: "Swimming Excellence Program",
+            organization: "Aqua Sports Club",
+            description: "Learn swimming techniques from basic to competitive level with certified instructors.",
+            duration: "4 months",
+            level: "All Levels",
+            location: "Chennai",
+            requirements: ["Age 12+", "Basic swimming ability"],
+            benefits: ["Water safety", "Fitness improvement", "Competition training"],
+            image: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=400&h=300&fit=crop",
+          },
+          {
+            id: 5,
+            title: "Tennis Masterclass",
+            organization: "Elite Tennis Academy",
+            description: "Professional tennis training with focus on technique, strategy, and mental game.",
+            duration: "3 months",
+            level: "Intermediate",
+            location: "Pune",
+            requirements: ["Age 16-28", "Tennis experience", "Physical fitness"],
+            benefits: ["Professional coaching", "Court practice", "Tournament preparation"],
+            image: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop",
+          },
+          {
+            id: 6,
+            title: "Track & Field Training",
+            organization: "Athletics Development Center",
+            description: "Comprehensive track and field training covering running, jumping, and throwing events.",
+            duration: "5 months",
+            level: "All Levels",
+            location: "Kolkata",
+            requirements: ["Age 14-25", "Basic fitness", "Commitment to training"],
+            benefits: ["Fitness development", "Competition training", "Scholarship opportunities"],
+            image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop",
+          },
+        ]
+          .filter((sport) => {
+            const matchesSearch =
+              sport.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              sport.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              sport.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+            const matchesFilter =
+              filterCategory === "all" ||
+              sport.title.toLowerCase().includes(filterCategory.toLowerCase()) ||
+              sport.organization.toLowerCase().includes(filterCategory.toLowerCase());
+
+            return matchesSearch && matchesFilter;
+          })
+          .map((sport) => (
+            <Card key={sport.id} hover className="p-6">
+              <div className="relative mb-4">
+                <img
+                  src={sport.image}
+                  alt={sport.title}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className="px-2 py-1 bg-primary-600 text-white text-xs rounded-full">
+                    {sport.level}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold text-lg mb-1">{sport.title}</h4>
+                  <p className="text-gray-600 text-sm">{sport.organization}</p>
+                </div>
+                
+                <p className="text-gray-700 dark:text-gray-300 text-sm">
+                  {sport.description}
+                </p>
+                
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {sport.duration}
+                  </span>
+                  <span className="flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {sport.location}
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                      Requirements:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {sport.requirements.map((req, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs"
+                        >
+                          {req}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                      Benefits:
+                    </p>
+                    <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                      {sport.benefits.map((benefit, index) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1 text-green-500" />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2 pt-4">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleApply("sport", sport.id)}
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Apply Now
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Heart className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+      </div>
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "overview":
@@ -2224,6 +2436,8 @@ const Dashboard = () => {
         return renderScholarships();
       case "courses":
         return renderCourses();
+      case "sports":
+        return renderSports();
       default:
         return renderOverview();
     }

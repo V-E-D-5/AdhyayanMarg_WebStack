@@ -43,13 +43,22 @@ const Navbar = () => {
   const navigation = isAuthenticated
     ? [
         ...baseNavigation,
-        // Add dashboard link only for non-admin users
-        ...(user?.role !== "admin"
+        // Add role-specific navigation
+        ...(user?.role === "student"
           ? [
               {
                 name: t("nav.dashboard"),
                 href: "/dashboard",
                 current: location.pathname === "/dashboard",
+              },
+            ]
+          : []),
+        ...(user?.role === "mentor"
+          ? [
+              {
+                name: "Mentor Portal",
+                href: "/mentor",
+                current: location.pathname === "/mentor",
               },
             ]
           : []),
@@ -93,195 +102,52 @@ const Navbar = () => {
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 transition-transform duration-300 group-hover:scale-105">
               <svg
-                width="100%"
-                height="100%"
+                width="32"
+                height="32"
                 viewBox="0 0 32 32"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
+                className="w-full h-full"
               >
                 <defs>
-                  <radialGradient id="bookGradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#f59e0b" />
-                  </radialGradient>
-                  <radialGradient id="leafGradient" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="100%" stopColor="#10b981" />
-                  </radialGradient>
-                  <filter
-                    id="shadow"
-                    x="-20%"
-                    y="-20%"
-                    width="140%"
-                    height="140%"
+                  <linearGradient
+                    id="mainGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
                   >
-                    <feDropShadow
-                      dx="1"
-                      dy="2"
-                      stdDeviation="2"
-                      floodColor="#000000"
-                      floodOpacity="0.1"
-                    />
-                  </filter>
+                    <stop offset="0%" stopColor="#1e40af" />
+                    <stop offset="25%" stopColor="#0ea5e9" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="75%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#22c55e" />
+                  </linearGradient>
+                  <linearGradient
+                    id="starGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="50%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#d97706" />
+                  </linearGradient>
                 </defs>
-
-                {/* Open Book with enhanced 3D effect and shadow */}
                 <path
-                  d="M6 22C6 20.5 7.5 19 9 19H23C24.5 19 26 20.5 26 22V28C26 29.5 24.5 31 23 31H9C7.5 31 6 29.5 6 28V22Z"
-                  fill="url(#bookGradient)"
-                  stroke="#d97706"
-                  strokeWidth="0.3"
-                  filter="url(#shadow)"
-                />
-
-                {/* Book pages with depth */}
-                <path
-                  d="M7 23L25 23M7 25L25 25M7 27L25 27M7 29L25 29"
-                  stroke="#d97706"
-                  strokeWidth="0.2"
-                  opacity="0.6"
-                />
-
-                {/* Book spine with shadow */}
-                <rect x="15.5" y="19" width="1" height="12" fill="#d97706" />
-                <rect
-                  x="15.7"
-                  y="19"
-                  width="0.3"
-                  height="12"
-                  fill="#92400e"
-                  opacity="0.5"
-                />
-
-                {/* Tree trunk with gradient */}
-                <rect
-                  x="15"
-                  y="22"
-                  width="2"
-                  height="6"
-                  fill="url(#bookGradient)"
-                />
-                <rect
-                  x="15.2"
-                  y="22"
-                  width="0.3"
-                  height="6"
-                  fill="#92400e"
-                  opacity="0.3"
-                />
-
-                {/* Main tree branches with enhanced styling */}
-                <path
-                  d="M13 20L15 22L17 20L19 22L17 24L15 22Z"
-                  fill="url(#bookGradient)"
-                  stroke="#d97706"
-                  strokeWidth="0.2"
+                  d="M6 24 Q8 20 10 18 Q12 16 14 18 Q16 20 18 18 Q20 16 22 18 Q24 20 26 24 Q24 26 22 28 Q20 30 18 28 Q16 26 14 28 Q12 30 10 28 Q8 26 6 24 Z"
+                  fill="url(#mainGradient)"
                 />
                 <path
-                  d="M12 18L14 20L16 18L18 20L16 22L14 20Z"
-                  fill="url(#bookGradient)"
-                  stroke="#d97706"
-                  strokeWidth="0.2"
-                />
-                <path
-                  d="M11 16L13 18L15 16L17 18L15 20L13 18Z"
-                  fill="url(#bookGradient)"
-                  stroke="#d97706"
-                  strokeWidth="0.2"
-                />
-                <path
-                  d="M10 14L12 16L14 14L16 16L14 18L12 16Z"
-                  fill="url(#bookGradient)"
-                  stroke="#d97706"
-                  strokeWidth="0.2"
-                />
-
-                {/* Tree leaves with gradient and depth - creating fuller canopy */}
-                <circle cx="10" cy="12" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="12" cy="10" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="14" cy="12" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="16" cy="10" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="18" cy="12" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="20" cy="10" r="1.8" fill="url(#leafGradient)" />
-                <circle cx="22" cy="12" r="1.8" fill="url(#leafGradient)" />
-
-                <circle cx="11" cy="14" r="1.5" fill="url(#leafGradient)" />
-                <circle cx="13" cy="14" r="1.5" fill="url(#leafGradient)" />
-                <circle cx="15" cy="14" r="1.5" fill="url(#leafGradient)" />
-                <circle cx="17" cy="14" r="1.5" fill="url(#leafGradient)" />
-                <circle cx="19" cy="14" r="1.5" fill="url(#leafGradient)" />
-                <circle cx="21" cy="14" r="1.5" fill="url(#leafGradient)" />
-
-                <circle cx="12" cy="16" r="1.2" fill="url(#leafGradient)" />
-                <circle cx="14" cy="16" r="1.2" fill="url(#leafGradient)" />
-                <circle cx="16" cy="16" r="1.2" fill="url(#leafGradient)" />
-                <circle cx="18" cy="16" r="1.2" fill="url(#leafGradient)" />
-                <circle cx="20" cy="16" r="1.2" fill="url(#leafGradient)" />
-
-                <circle cx="13" cy="18" r="1" fill="url(#leafGradient)" />
-                <circle cx="15" cy="18" r="1" fill="url(#leafGradient)" />
-                <circle cx="17" cy="18" r="1" fill="url(#leafGradient)" />
-                <circle cx="19" cy="18" r="1" fill="url(#leafGradient)" />
-
-                <circle cx="14" cy="20" r="0.8" fill="url(#leafGradient)" />
-                <circle cx="16" cy="20" r="0.8" fill="url(#leafGradient)" />
-                <circle cx="18" cy="20" r="0.8" fill="url(#leafGradient)" />
-
-                {/* Subtle highlights on leaves for 3D effect */}
-                <circle
-                  cx="10.3"
-                  cy="11.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="12.3"
-                  cy="9.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="14.3"
-                  cy="11.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="16.3"
-                  cy="9.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="18.3"
-                  cy="11.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="20.3"
-                  cy="9.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
-                />
-                <circle
-                  cx="22.3"
-                  cy="11.5"
-                  r="0.4"
-                  fill="#6ee7b7"
-                  opacity="0.6"
+                  d="M20 8 L22 12 L26 12 L23 15 L24 19 L20 17 L16 19 L17 15 L14 12 L18 12 Z"
+                  fill="url(#starGradient)"
                 />
               </svg>
             </div>
             <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white transition-all duration-300">
-              <span className="hidden sm:inline">AdhyayanMarg</span>
-              <span className="sm:hidden">AM</span>
+              <span className="hidden sm:inline">Yukti</span>
+              <span className="sm:hidden">Y</span>
             </span>
           </Link>
 
@@ -377,27 +243,27 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-1 sm:space-x-2">
-                {/* Admin Portal Button - Responsive */}
+                {/* Admin Login Button - Responsive */}
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/admin-login")}
-                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 touch-target transition-all duration-200"
+                  onClick={() => navigate("/admin/login")}
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 font-medium touch-target transition-all duration-200"
                 >
                   <Shield className="w-4 h-4" />
                   <span className="hidden sm:block font-medium">
-                    Admin Portal
+                    Admin Login
                   </span>
                 </Button>
 
-                {/* Sign In Button - Responsive */}
+                {/* Login Button - Responsive */}
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => navigate("/login")}
-                  className="hidden sm:flex px-3 sm:px-4 py-2 font-medium touch-target transition-all duration-200"
+                  className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 font-medium touch-target transition-all duration-200"
                 >
-                  {t("auth.signIn")}
+                  <span className="font-medium">Login/Signup</span>
                 </Button>
               </div>
             )}
@@ -499,19 +365,19 @@ const Navbar = () => {
                       }}
                       className="w-full touch-target min-h-[48px] text-base"
                     >
-                      {t("auth.signIn")}
+                      Login/Signup
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="lg"
                       onClick={() => {
-                        navigate("/admin-login");
+                        navigate("/admin/login");
                         setIsOpen(false);
                       }}
-                      className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 touch-target min-h-[48px] text-base"
+                      className="w-full touch-target min-h-[48px] text-base text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 flex items-center justify-center space-x-2"
                     >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Admin Portal
+                      <Shield className="w-4 h-4" />
+                      <span>Admin Login</span>
                     </Button>
                   </div>
                 )}

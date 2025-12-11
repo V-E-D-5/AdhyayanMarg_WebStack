@@ -1,10 +1,14 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// Simple cache for API responses
+const apiCache = new Map();
+const CACHE_DURATION = 30 * 1000; // 30 seconds
+
 // Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-  timeout: 10000,
+  timeout: 8000, // Reduced from 10 seconds to 8 seconds
   headers: {
     "Content-Type": "application/json",
   },
@@ -17,6 +21,13 @@ api.interceptors.request.use(
     const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add cache busting headers for quiz data requests
+    if (config.url?.includes("/admin/quiz-data")) {
+      config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+      config.headers["Pragma"] = "no-cache";
+      config.headers["Expires"] = "0";
     }
 
     // Add request timestamp for debugging
@@ -57,31 +68,40 @@ api.interceptors.response.use(
 
       switch (status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
-          localStorage.removeItem("authToken");
-          toast.error("Session expired. Please login again.");
+          // Only show toast for 401 errors that are not from login attempts
+          // Login 401 errors should be handled by the component, not the interceptor
+          if (!error.config?.url?.includes("/auth/login")) {
+            localStorage.removeItem("authToken");
+            toast.error("Session expired. Please login again.");
+          }
           break;
         case 403:
-          toast.error("Access denied. You do not have permission.");
+          // Don't show automatic toast for 403 - let components handle it
+          console.warn("Access denied for:", error.config?.url);
           break;
         case 404:
-          toast.error("Resource not found.");
+          // Don't show automatic toast for 404 - let components handle it
+          console.warn("Resource not found:", error.config?.url);
           break;
         case 429:
           toast.error("Too many requests. Please try again later.");
           break;
         case 500:
-          toast.error("Server error. Please try again later.");
+          // Don't show automatic toast for 500 - let components handle it
+          console.warn("Server error for:", error.config?.url);
           break;
         default:
-          toast.error(data?.message || "An error occurred.");
+          // Don't show automatic toast for other errors - let components handle it
+          console.warn("API error for:", error.config?.url, data?.message);
       }
     } else if (error.request) {
-      // Network error
-      toast.error("Network error. Please check your connection.");
+      // Network error - don't show automatic toasts, let components handle their own errors
+      console.warn("Network error for:", error.config?.url, error.message);
+      // Components will handle their own error messages
     } else {
-      // Other error
-      toast.error("An unexpected error occurred.");
+      // Other error - don't show automatic toasts
+      console.warn("API error:", error.message);
+      // Components will handle their own error messages
     }
 
     return Promise.reject(error);
@@ -151,7 +171,10 @@ export const endpoints = {
   admin: {
     dashboard: "/admin/dashboard",
     users: "/admin/users",
+    createUser: "/admin/users",
     updateUserStatus: (userId) => `/admin/users/${userId}/status`,
+    resetUserPassword: (userId) => `/admin/users/${userId}/password`,
+    deleteUser: (userId) => `/admin/users/${userId}`,
     quizData: "/admin/quiz-data",
   },
 
@@ -162,6 +185,27 @@ export const endpoints = {
     me: "/auth/me",
     logout: "/auth/logout",
     verify: "/auth/verify",
+  },
+
+  // Mentor
+  mentor: {
+    students: "/mentor/students",
+    assignedStudents: "/mentor/assigned-students",
+    assignStudents: "/mentor/assign-students",
+    unassignStudents: "/mentor/unassign-students",
+    sendMessage: "/mentor/send-message",
+    dashboardStats: "/mentor/dashboard-stats",
+    studentProfile: (studentId) => `/mentor/student/${studentId}/profile`,
+    studentAptitude: (studentId) => `/mentor/student/${studentId}/aptitude`,
+    careerRecommendations: (studentId) =>
+      `/mentor/student/${studentId}/career-recommendations`,
+    guidanceSession: "/mentor/guidance-session",
+    performanceFeedback: "/mentor/performance-feedback",
+    analytics: "/mentor/analytics",
+    studentTimeline: (studentId) => `/mentor/student/${studentId}/timeline`,
+    sessions: "/mentor/sessions",
+    messages: "/mentor/messages",
+    sendMessageToStudent: "/mentor/send-message-to-student",
   },
 };
 
@@ -221,12 +265,61 @@ export const apiService = {
   logout: () => api.post(endpoints.auth.logout),
   verifyToken: (token) => api.post(endpoints.auth.verify, { token }),
 
-  // Admin
-  getAdminDashboard: () => api.get(endpoints.admin.dashboard),
+  // Admin with caching
+  getAdminDashboard: () => {
+    const cacheKey = "admin-dashboard";
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return Promise.resolve(cached.response);
+    }
+    return api.get(endpoints.admin.dashboard).then((response) => {
+      apiCache.set(cacheKey, { response, timestamp: Date.now() });
+      return response;
+    });
+  },
   getAdminUsers: (params) => api.get(endpoints.admin.users, { params }),
   updateUserStatus: (userId, data) =>
     api.patch(endpoints.admin.updateUserStatus(userId), data),
-  getAdminQuizData: () => api.get(endpoints.admin.quizData),
+  resetUserPassword: (userId, data) =>
+    api.patch(endpoints.admin.resetUserPassword(userId), data),
+  deleteUser: (userId, data) =>
+    api.delete(endpoints.admin.deleteUser(userId), { data }),
+  getAdminQuizData: (forceRefresh = false) => {
+    const url = forceRefresh
+      ? `${endpoints.admin.quizData}?t=${Date.now()}`
+      : endpoints.admin.quizData;
+    return api.get(url);
+  },
+  createUser: (userData) => api.post(endpoints.admin.createUser, userData),
+
+  // Mentor
+  getMentorStudents: (params) => api.get(endpoints.mentor.students, { params }),
+  getMentorAssignedStudents: () => api.get(endpoints.mentor.assignedStudents),
+  assignStudents: (data) => api.post(endpoints.mentor.assignStudents, data),
+  unassignStudents: (data) => api.post(endpoints.mentor.unassignStudents, data),
+  sendMessageToStudents: (data) => api.post(endpoints.mentor.sendMessage, data),
+  getMentorDashboardStats: () => api.get(endpoints.mentor.dashboardStats),
+
+  // New mentor functionalities
+  getStudentProfile: (studentId) =>
+    api.get(endpoints.mentor.studentProfile(studentId)),
+  getStudentAptitude: (studentId) =>
+    api.get(endpoints.mentor.studentAptitude(studentId)),
+  getCareerRecommendations: (studentId) =>
+    api.get(endpoints.mentor.careerRecommendations(studentId)),
+  recordGuidanceSession: (data) =>
+    api.post(endpoints.mentor.guidanceSession, data),
+  submitPerformanceFeedback: (data) =>
+    api.post(endpoints.mentor.performanceFeedback, data),
+
+  // Enhanced mentor functionalities
+  getMentorAnalytics: () => api.get(endpoints.mentor.analytics),
+  getStudentTimeline: (studentId) =>
+    api.get(endpoints.mentor.studentTimeline(studentId)),
+  getSessionHistory: (params) => api.get(endpoints.mentor.sessions, { params }),
+  getMessages: (params) => api.get(endpoints.mentor.messages, { params }),
+  sendMessageToStudent: (data) =>
+    api.post(endpoints.mentor.sendMessageToStudent, data),
 };
 
 export default api;

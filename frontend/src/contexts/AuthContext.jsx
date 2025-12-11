@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }) => {
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    // Ensure loading is false after successful login
+    setLoading(false);
   };
 
   const logout = async () => {
@@ -72,5 +74,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-

@@ -1,0 +1,68 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#3b82f6" />
+      <stop offset="30%" stopColor="#6366f1" />
+      <stop offset="60%" stopColor="#8b5cf6" />
+      <stop offset="100%" stopColor="#ec4899" />
+    </linearGradient>
+    <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#fbbf24" />
+      <stop offset="50%" stopColor="#f59e0b" />
+      <stop offset="100%" stopColor="#d97706" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#06b6d4" />
+      <stop offset="100%" stopColor="#3b82f6" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Main flowing shape - represents career path and growth -->
+  <path 
+    d="M6 20 Q12 8 16 12 Q20 4 26 16 Q24 20 20 24 Q16 28 12 24 Q8 26 6 20 Z" 
+    fill="url(#mainGradient)" 
+    filter="url(#glow)"
+  />
+  
+  <!-- Secondary flowing element for depth -->
+  <path 
+    d="M8 18 Q14 10 18 14 Q22 8 24 18 Q22 22 18 22 Q14 24 10 22 Q8 20 8 18 Z" 
+    fill="url(#accentGradient)" 
+    opacity="0.7"
+  />
+  
+  <!-- Star/burst element - represents achievement and guidance -->
+  <g filter="url(#starGlow)">
+    <path 
+      d="M20 6 L22 10 L26 10 L23 13 L24 17 L20 15 L16 17 L17 13 L14 10 L18 10 Z" 
+      fill="url(#starGradient)"
+    />
+  </g>
+  
+  <!-- Additional accent dots for visual interest -->
+  <circle cx="10" cy="14" r="1" fill="#06b6d4" opacity="0.8" />
+  <circle cx="22" cy="18" r="0.8" fill="#8b5cf6" opacity="0.8" />
+  <circle cx="14" cy="22" r="0.6" fill="#ec4899" opacity="0.8" />
+  
+  <!-- Subtle highlight for 3D effect -->
+  <path 
+    d="M8 18 Q12 12 16 14 Q18 10 20 16" 
+    stroke="rgba(255,255,255,0.3)" 
+    strokeWidth="0.5" 
+    fill="none"
+  />
+</svg>

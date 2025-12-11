@@ -1,7 +1,7 @@
 {
-  "name": "adhyayanmarg-backend",
+  "name": "yukti-backend",
   "version": "1.0.0",
-  "description": "Backend microservice for AdhyayanMarg career guidance platform",
+  "description": "Backend microservice for Yukti career guidance platform",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

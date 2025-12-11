@@ -11,14 +11,19 @@ import "./i18n/i18n";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 2,
       refetchOnWindowFocus: false,
-      staleTime: 0, // Disable caching for debugging
-      cacheTime: 0, // Disable cache for debugging
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 1,
     },
   },
   logger: {
-    log: console.log,
+    log: import.meta.env.VITE_DEBUG === "true" ? console.log : () => {},
     warn: console.warn,
     error: console.error,
   },
@@ -57,4 +62,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </QueryClientProvider>
   </React.StrictMode>
 );
-

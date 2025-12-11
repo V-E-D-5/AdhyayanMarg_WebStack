@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { apiService } from "../utils/api";
 import Button from "../components/UI/Button";
@@ -69,6 +70,7 @@ import {
 } from "recharts";
 
 const AdminDashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
@@ -84,6 +86,41 @@ const AdminDashboard = () => {
   const [quizData, setQuizData] = useState(null);
   const [quizLoading, setQuizLoading] = useState(false);
   const [lastQuizRefresh, setLastQuizRefresh] = useState(null);
+
+  // Password reset state
+  const [passwordResetModal, setPasswordResetModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Success popup state
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Delete user state
+  const [deleteUserModal, setDeleteUserModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [deleteUserLoading, setDeleteUserLoading] = useState(false);
+
+  // Refresh state
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+
+  // Create user modal state
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "student",
+  });
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserErrors, setCreateUserErrors] = useState({});
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -123,43 +160,127 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     console.log("AdminDashboard useEffect triggered");
-    fetchDashboardData();
-    fetchUsers();
-    fetchQuizData();
-  }, []);
+    console.log("User:", user);
+    console.log("User role:", user?.role);
+    console.log("Quiz data state:", quizData);
 
-  // Auto-refresh quiz data every 30 seconds when quiz tab is active
+    // Only fetch data if user is authenticated and data is not already loaded
+    if (user && user.role === "admin") {
+      // Sequential loading to prevent overwhelming the server
+      const loadData = async () => {
+        try {
+          if (!dashboardData) {
+            console.log("Fetching dashboard data...");
+            await fetchDashboardData();
+          }
+          if (users.length === 0) {
+            console.log("Fetching users...");
+            await fetchUsers();
+          }
+          // Always fetch quiz data on component load for admin users
+          console.log("Fetching quiz data on component load...");
+          await fetchQuizData();
+        } catch (error) {
+          console.error("Error loading admin dashboard data:", error);
+          // Don't show toast here, let individual functions handle their own errors
+        }
+      };
+
+      loadData();
+    }
+  }, [user]); // Add user as dependency
+
+  // Auto-refresh quiz data every 60 seconds when quiz tab is active (reduced frequency)
   useEffect(() => {
     if (activeTab === "quiz") {
+      // Fetch quiz data immediately when quiz tab is accessed
+      if (!quizData) {
+        console.log("Quiz tab accessed, fetching quiz data...");
+        fetchQuizData();
+      }
+
       const interval = setInterval(() => {
         console.log("Auto-refreshing quiz data...");
-        fetchQuizData();
-      }, 30000); // 30 seconds
+        fetchQuizData(true); // Force refresh for auto-refresh
+      }, 60000); // 60 seconds (reduced from 30 seconds)
 
       return () => clearInterval(interval);
     }
-  }, [activeTab]);
+  }, [activeTab, quizData]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
+    // Simple cache: only fetch if data is older than 30 seconds or force refresh
+    const now = Date.now();
+    const cacheTime = 30 * 1000; // 30 seconds
+    if (
+      !forceRefresh &&
+      lastFetchTime &&
+      now - lastFetchTime < cacheTime &&
+      dashboardData
+    ) {
+      console.log("Using cached dashboard data");
+      setLoading(false);
+      return;
+    }
+
     try {
+      setLoading(true);
+      setError(null); // Clear any previous errors
       console.log("Fetching dashboard data...");
-      const response = await apiService.getAdminDashboard();
+
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timeout")), 15000); // 15 second timeout
+      });
+
+      const response = await Promise.race([
+        apiService.getAdminDashboard(),
+        timeoutPromise,
+      ]);
+
       console.log("Dashboard data response:", response.data);
-      setDashboardData(response.data.data);
+
+      if (response.data.success) {
+        setDashboardData(response.data.data);
+        setLastFetchTime(now);
+        setError(null); // Clear any previous errors
+      } else {
+        throw new Error(
+          response.data.message || "Failed to fetch dashboard data"
+        );
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      if (error.response?.status === 503) {
-        setError(
-          "Database not connected. Please ensure MongoDB is running and properly configured."
-        );
-      } else {
-        setError("Failed to load dashboard data");
+      let errorMessage = "Failed to load dashboard data";
+
+      if (error.response?.status === 401) {
+        errorMessage = "Authentication required. Please login again.";
+      } else if (error.response?.status === 403) {
+        errorMessage = "Access denied. Admin privileges required.";
+      } else if (error.response?.status === 503) {
+        errorMessage =
+          "Database not connected. Please ensure MongoDB is running and properly configured.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (
+        error.code === "ECONNABORTED" ||
+        error.message === "Request timeout"
+      ) {
+        errorMessage = "Request timed out. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchUsers = async (page = 1, search = "", role = "", status = "") => {
     try {
+      setLoading(true);
+      setError(null); // Clear any previous errors
       console.log("Fetching users...");
       const params = {
         page,
@@ -169,19 +290,48 @@ const AdminDashboard = () => {
         ...(status && { status }),
       };
 
-      const response = await apiService.getAdminUsers(params);
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timeout")), 15000); // 15 second timeout
+      });
+
+      const response = await Promise.race([
+        apiService.getAdminUsers(params),
+        timeoutPromise,
+      ]);
+
       console.log("Users data response:", response.data);
-      setUsers(response.data.data.users);
-      setPagination(response.data.data.pagination);
+
+      if (response.data.success) {
+        setUsers(response.data.data.users);
+        setPagination(response.data.data.pagination);
+        setError(null); // Clear any previous errors
+      } else {
+        throw new Error(response.data.message || "Failed to fetch users data");
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
-      if (error.response?.status === 503) {
-        setError(
-          "Database not connected. Please ensure MongoDB is running and properly configured."
-        );
-      } else {
-        setError("Failed to load users data");
+      let errorMessage = "Failed to load users data";
+
+      if (error.response?.status === 401) {
+        errorMessage = "Authentication required. Please login again.";
+      } else if (error.response?.status === 403) {
+        errorMessage = "Access denied. Admin privileges required.";
+      } else if (error.response?.status === 503) {
+        errorMessage =
+          "Database not connected. Please ensure MongoDB is running and properly configured.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (
+        error.code === "ECONNABORTED" ||
+        error.message === "Request timeout"
+      ) {
+        errorMessage = "Request timed out. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -197,13 +347,23 @@ const AdminDashboard = () => {
     fetchUsers(newPage, searchTerm, roleFilter, statusFilter);
   };
 
-  const fetchQuizData = async () => {
+  const fetchQuizData = async (forceRefresh = false) => {
     try {
       setQuizLoading(true);
-      console.log("Fetching quiz data...");
+      console.log(
+        "Fetching quiz data...",
+        forceRefresh ? "(Force refresh)" : ""
+      );
+      console.log(
+        "API service getAdminQuizData function:",
+        apiService.getAdminQuizData
+      );
 
-      const response = await apiService.getAdminQuizData();
+      // Add cache busting parameter for force refresh
+      const response = await apiService.getAdminQuizData(forceRefresh);
       console.log("Quiz data response:", response.data);
+      console.log("Quiz data response status:", response.status);
+      console.log("Quiz data response success:", response.data.success);
 
       if (response.data.success && response.data.data) {
         const backendData = response.data.data;
@@ -229,31 +389,53 @@ const AdminDashboard = () => {
         };
 
         console.log("Mapped quiz data:", mappedData);
+        console.log("Setting quiz data state...");
         setQuizData(mappedData);
         setLastQuizRefresh(new Date());
+        console.log("Quiz data state set successfully");
+
+        // Show success message for manual refresh
+        if (forceRefresh) {
+          setSuccessMessage("✅ Quiz data refreshed successfully!");
+          setShowSuccessPopup(true);
+          setTimeout(() => {
+            setShowSuccessPopup(false);
+          }, 3000);
+        }
       } else {
         throw new Error("Invalid response format");
       }
     } catch (error) {
       console.error("Error fetching quiz data:", error);
 
-      // Set fallback data if API fails
-      setQuizData({
-        totalQuizzes: 0,
-        guestQuizzes: 0,
-        authenticatedQuizzes: 0,
-        personalityDistribution: {
-          analytical: 0,
-          creative: 0,
-          social: 0,
-          leadership: 0,
-          explorer: 0,
-        },
-        recentQuizzes: [],
-        averageCompletionTime: 0,
-        totalAnswers: 0,
-        mostCommonPersonality: "analytical",
-      });
+      // Show error message for manual refresh
+      if (forceRefresh) {
+        setSuccessMessage("❌ Failed to refresh quiz data. Please try again.");
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+        }, 3000);
+      }
+
+      // Only reset data if this is the initial load, not a refresh
+      if (!forceRefresh) {
+        setQuizData({
+          totalQuizzes: 0,
+          guestQuizzes: 0,
+          authenticatedQuizzes: 0,
+          personalityDistribution: {
+            analytical: 0,
+            creative: 0,
+            social: 0,
+            leadership: 0,
+            explorer: 0,
+          },
+          recentQuizzes: [],
+          averageCompletionTime: 0,
+          totalAnswers: 0,
+          mostCommonPersonality: "analytical",
+        });
+      }
     } finally {
       setQuizLoading(false);
     }
@@ -266,6 +448,273 @@ const AdminDashboard = () => {
       fetchUsers(currentPage, searchTerm, roleFilter, statusFilter);
     } catch (error) {
       console.error("Error updating user status:", error);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+
+    // Validate form
+    const errors = {};
+    if (!createUserForm.name.trim()) {
+      errors.name = "Name is required";
+    }
+    if (!createUserForm.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(createUserForm.email)) {
+      errors.email = "Please enter a valid email";
+    }
+    if (!createUserForm.password) {
+      errors.password = "Password is required";
+    } else if (createUserForm.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    if (createUserForm.password !== createUserForm.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    if (!createUserForm.role) {
+      errors.role = "Role is required";
+    }
+
+    setCreateUserErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    setCreateUserLoading(true);
+    try {
+      const response = await apiService.createUser({
+        name: createUserForm.name,
+        email: createUserForm.email,
+        password: createUserForm.password,
+        role: createUserForm.role,
+      });
+
+      if (response.data.success) {
+        setShowCreateUserModal(false);
+        setCreateUserForm({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          role: "student",
+        });
+        setCreateUserErrors({});
+
+        // Refresh users list
+        fetchUsers(currentPage, searchTerm, roleFilter, statusFilter);
+
+        // Show success message
+        setSuccessMessage("✅ User created successfully!");
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+        }, 3000);
+      } else {
+        setCreateUserErrors({
+          general: response.data.message || "Failed to create user",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+      setCreateUserErrors({
+        general:
+          error.response?.data?.message ||
+          "Failed to create user. Please try again.",
+      });
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
+
+  // Password reset functions
+  const handlePasswordReset = (user) => {
+    console.log("Opening password reset modal for user:", user);
+    console.log("User ID:", user.id);
+    console.log("User _id:", user._id);
+    setSelectedUser(user);
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setPasswordResetModal(true);
+  };
+
+  const handlePasswordResetSubmit = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      setSuccessMessage("❌ Password must be at least 6 characters long");
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setSuccessMessage("❌ Passwords do not match");
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+      return;
+    }
+
+    setPasswordResetLoading(true);
+    try {
+      console.log("Attempting password reset for user:", selectedUser);
+      console.log("User ID:", selectedUser.id);
+      console.log("New password:", newPassword);
+      console.log("Auth token:", localStorage.getItem("authToken"));
+
+      // Test the API call manually
+      const endpoint = `/admin/users/${selectedUser.id}/password`;
+      console.log("API endpoint:", endpoint);
+      console.log("Request data:", { newPassword });
+
+      const response = await apiService.resetUserPassword(selectedUser.id, {
+        newPassword,
+      });
+      console.log("Password reset response:", response);
+
+      // Show success popup
+      setSuccessMessage(
+        `Password reset successfully for ${selectedUser.name}!`
+      );
+      setShowSuccessPopup(true);
+
+      // Close password reset modal
+      setPasswordResetModal(false);
+      setSelectedUser(null);
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+
+      // Auto-hide success popup after 3 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      console.error("Error message:", error.message);
+      console.error("Full error object:", error);
+
+      let errorMessage = "Failed to reset password. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Show error popup
+      setSuccessMessage(`❌ ${errorMessage}`);
+      setShowSuccessPopup(true);
+
+      // Auto-hide error popup after 4 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 4000);
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
+  // Delete user functions
+  const handleDeleteUser = (user) => {
+    setUserToDelete(user);
+    setAdminPassword("");
+    setDeleteUserModal(true);
+  };
+
+  const handleDeleteUserSubmit = async () => {
+    if (!adminPassword) {
+      setSuccessMessage("❌ Admin password is required");
+      setShowSuccessPopup(true);
+      setTimeout(() => setShowSuccessPopup(false), 3000);
+      return;
+    }
+
+    setDeleteUserLoading(true);
+    try {
+      await apiService.deleteUser(userToDelete.id, { adminPassword });
+
+      // Show success popup
+      setSuccessMessage(`User ${userToDelete.name} deleted successfully!`);
+      setShowSuccessPopup(true);
+
+      // Close delete modal
+      setDeleteUserModal(false);
+      setUserToDelete(null);
+      setAdminPassword("");
+
+      // Refresh users list
+      fetchUsers();
+
+      // Auto-hide success popup after 3 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      console.error("Error message:", error.message);
+      console.error("Full error object:", error);
+
+      let errorMessage = "Failed to delete user. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Show error popup
+      setSuccessMessage(`❌ ${errorMessage}`);
+      setShowSuccessPopup(true);
+
+      // Auto-hide error popup after 4 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 4000);
+    } finally {
+      setDeleteUserLoading(false);
+    }
+  };
+
+  // Optimized refresh - only refresh what's currently visible
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Refresh only the active tab data in parallel
+      const refreshPromises = [];
+
+      // Always refresh dashboard data
+      refreshPromises.push(fetchDashboardData(true));
+
+      // Only refresh other data if their tabs are active
+      if (activeTab === "users" || users.length === 0) {
+        refreshPromises.push(fetchUsers());
+      }
+
+      if (activeTab === "quiz" || !quizData) {
+        refreshPromises.push(fetchQuizData(true));
+      }
+
+      // Execute all refreshes in parallel
+      await Promise.allSettled(refreshPromises);
+
+      setSuccessMessage("✅ Data refreshed successfully!");
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Refresh error:", error);
+      setSuccessMessage("❌ Failed to refresh data. Please try again.");
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+      }, 3000);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -503,10 +952,32 @@ const AdminDashboard = () => {
                 Admin Dashboard
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Welcome back, {user?.name}! Here's what's happening today.
+                Welcome, {user?.name}! Here's what's happening today.
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors duration-200"
+              >
+                <svg
+                  className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span className="text-sm font-medium">
+                  {refreshing ? "Refreshing..." : "Refresh Data"}
+                </span>
+              </button>
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -619,19 +1090,18 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Quiz Submissions
+                      Total Mentors
                     </p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                      {quizData?.totalQuizzes || 0}
+                      {dashboardData?.userStats?.mentorUsers || 0}
                     </p>
-                    <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center mt-1">
-                      <Target className="w-3 h-3 mr-1" />
-                      {quizData?.authenticatedQuizzes || 0} detailed,{" "}
-                      {quizData?.guestQuizzes || 0} mock
+                    <p className="text-sm text-purple-600 dark:text-purple-400 flex items-center mt-1">
+                      <Users className="w-3 h-3 mr-1" />
+                      Active mentors in the system
                     </p>
                   </div>
-                  <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                    <Target className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                    <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
               </div>
@@ -737,10 +1207,12 @@ const AdminDashboard = () => {
                         className={`px-2 py-1 text-xs rounded-full ${
                           user.role === "admin"
                             ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            : user.role === "mentor"
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                             : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                         }`}
                       >
-                        {user.role}
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </span>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {new Date(user.createdAt).toLocaleDateString()}
@@ -761,6 +1233,39 @@ const AdminDashboard = () => {
                 User Management
               </h3>
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowCreateUserModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Account</span>
+                </button>
+                <button
+                  onClick={() =>
+                    fetchUsers(
+                      currentPage,
+                      searchTerm,
+                      roleFilter,
+                      statusFilter
+                    )
+                  }
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span className="text-sm">Refresh</span>
+                </button>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
@@ -778,6 +1283,7 @@ const AdminDashboard = () => {
                 >
                   <option value="">All Roles</option>
                   <option value="admin">Admin</option>
+                  <option value="mentor">Mentor</option>
                   <option value="student">Student</option>
                 </select>
                 <select
@@ -848,10 +1354,13 @@ const AdminDashboard = () => {
                             className={`px-2 py-1 text-xs rounded-full ${
                               user.role === "admin"
                                 ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                : user.role === "mentor"
+                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                                 : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                             }`}
                           >
-                            {user.role}
+                            {user.role.charAt(0).toUpperCase() +
+                              user.role.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -873,17 +1382,19 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
+                            {user.role !== "admin" && (
+                              <button
+                                onClick={() => handleDeleteUser(user)}
+                                className="px-2 py-1 text-xs rounded bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200"
+                              >
+                                Delete
+                              </button>
+                            )}
                             <button
-                              onClick={() =>
-                                handleUserStatusUpdate(user.id, !user.isActive)
-                              }
-                              className={`px-2 py-1 text-xs rounded ${
-                                user.isActive
-                                  ? "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200"
-                                  : "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200"
-                              }`}
+                              onClick={() => handlePasswordReset(user)}
+                              className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200"
                             >
-                              {user.isActive ? "Deactivate" : "Activate"}
+                              Reset Password
                             </button>
                             <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                               <MoreHorizontal className="w-4 h-4" />
@@ -969,10 +1480,16 @@ const AdminDashboard = () => {
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
                       Track quiz submissions and user engagement
                     </p>
+                    {!quizData && !quizLoading && (
+                      <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                        No quiz data loaded. Click "Load Data" to fetch quiz
+                        statistics.
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col items-end space-y-2">
                     <button
-                      onClick={fetchQuizData}
+                      onClick={() => fetchQuizData(true)}
                       disabled={quizLoading}
                       className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
@@ -982,12 +1499,21 @@ const AdminDashboard = () => {
                         <RefreshCw className="w-4 h-4" />
                       )}
                       <span>
-                        {quizLoading ? "Refreshing..." : "Refresh Data"}
+                        {quizLoading
+                          ? "Refreshing..."
+                          : !quizData
+                          ? "Load Data"
+                          : "Refresh Data"}
                       </span>
                     </button>
                     {lastQuizRefresh && (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Last updated: {lastQuizRefresh.toLocaleTimeString()}
+                        {quizLoading && (
+                          <span className="ml-2 text-primary-600 dark:text-primary-400">
+                            • Refreshing...
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>
@@ -1002,7 +1528,17 @@ const AdminDashboard = () => {
                           Total Quizzes
                         </p>
                         <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                          {quizData?.totalQuizzes || 0}
+                          {quizLoading ? (
+                            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <span
+                              onClick={() =>
+                                console.log("Current quizData:", quizData)
+                              }
+                            >
+                              {quizData?.totalQuizzes || 0}
+                            </span>
+                          )}
                         </p>
                         <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center mt-1">
                           <Target className="w-3 h-3 mr-1" />
@@ -1398,11 +1934,18 @@ const AdminDashboard = () => {
                 {/* Recent Quiz Submissions */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Recent Quiz Submissions
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Recent Quiz Submissions
+                      </h3>
+                      {quizLoading && (
+                        <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                          Updating submissions...
+                        </p>
+                      )}
+                    </div>
                     <button
-                      onClick={fetchQuizData}
+                      onClick={() => fetchQuizData(true)}
                       disabled={quizLoading}
                       className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -1565,7 +2108,7 @@ const AdminDashboard = () => {
                     </div>
                     <input
                       type="text"
-                      defaultValue="AdhyayanMarg"
+                      defaultValue="Yukti"
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-48"
                     />
                   </div>
@@ -1946,6 +2489,452 @@ const AdminDashboard = () => {
               <Button size="lg" className="bg-green-600 hover:bg-green-700">
                 Save All Settings
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Password Reset Modal */}
+        {passwordResetModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Reset Password for {selectedUser?.name}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      {showPassword ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      {showConfirmPassword ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setPasswordResetModal(false);
+                      setSelectedUser(null);
+                      setNewPassword("");
+                      setConfirmPassword("");
+                      setShowPassword(false);
+                      setShowConfirmPassword(false);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePasswordResetSubmit}
+                    disabled={passwordResetLoading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg"
+                  >
+                    {passwordResetLoading ? "Resetting..." : "Reset Password"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete User Confirmation Modal */}
+        {deleteUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Delete User: {userToDelete?.name}
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <svg
+                      className="w-5 h-5 text-red-600 dark:text-red-400 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <p className="text-sm text-red-800 dark:text-red-200">
+                      <strong>Warning:</strong> This action cannot be undone.
+                      The user will be permanently deleted from the database.
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Enter your admin password to confirm deletion
+                  </label>
+                  <input
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter admin password"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      setDeleteUserModal(false);
+                      setUserToDelete(null);
+                      setAdminPassword("");
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteUserSubmit}
+                    disabled={deleteUserLoading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg"
+                  >
+                    {deleteUserLoading ? "Deleting..." : "Delete User"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success/Error Popup */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md mx-4 text-center shadow-2xl transform transition-all duration-300 scale-100">
+              <div className="mb-4">
+                {successMessage.includes("❌") ? (
+                  <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-red-600 dark:text-red-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-8 h-8 text-green-600 dark:text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <h3
+                className={`text-lg font-semibold mb-2 ${
+                  successMessage.includes("❌")
+                    ? "text-red-900 dark:text-red-100"
+                    : "text-green-900 dark:text-green-100"
+                }`}
+              >
+                {successMessage.includes("❌") ? "Error" : "Success!"}
+              </h3>
+              <p
+                className={`text-sm ${
+                  successMessage.includes("❌")
+                    ? "text-red-700 dark:text-red-300"
+                    : "text-green-700 dark:text-green-300"
+                }`}
+              >
+                {successMessage.replace("❌ ", "")}
+              </p>
+              <button
+                onClick={() => setShowSuccessPopup(false)}
+                className={`mt-4 px-6 py-2 rounded-lg font-medium transition-colors ${
+                  successMessage.includes("❌")
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Create User Modal */}
+        {showCreateUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Create New Account
+              </h3>
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                {createUserErrors.general && (
+                  <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 px-3 py-2 rounded-lg text-sm">
+                    {createUserErrors.general}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={createUserForm.name}
+                    onChange={(e) =>
+                      setCreateUserForm((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter full name"
+                  />
+                  {createUserErrors.name && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {createUserErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={createUserForm.email}
+                    onChange={(e) =>
+                      setCreateUserForm((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter email address"
+                  />
+                  {createUserErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {createUserErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Role
+                  </label>
+                  <select
+                    value={createUserForm.role}
+                    onChange={(e) =>
+                      setCreateUserForm((prev) => ({
+                        ...prev,
+                        role: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="student">Student</option>
+                    <option value="mentor">Mentor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  {createUserErrors.role && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {createUserErrors.role}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={createUserForm.password}
+                    onChange={(e) =>
+                      setCreateUserForm((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Enter password"
+                  />
+                  {createUserErrors.password && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {createUserErrors.password}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    value={createUserForm.confirmPassword}
+                    onChange={(e) =>
+                      setCreateUserForm((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Confirm password"
+                  />
+                  {createUserErrors.confirmPassword && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {createUserErrors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateUserModal(false);
+                      setCreateUserForm({
+                        name: "",
+                        email: "",
+                        password: "",
+                        confirmPassword: "",
+                        role: "student",
+                      });
+                      setCreateUserErrors({});
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createUserLoading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 rounded-lg"
+                  >
+                    {createUserLoading ? "Creating..." : "Create Account"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

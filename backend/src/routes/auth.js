@@ -3,21 +3,8 @@ const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const {
-  createUser,
-  findUserByEmail,
-  findUserByEmailWithPassword,
-  findUserById,
-  updateUser,
-  comparePassword,
-} = require("../data/mockUsers");
-const mongoose = require("mongoose");
+const { ensureDbConnection, isDbConnected } = require("../utils/database");
 const router = express.Router();
-
-// Check if database is connected
-const isDbConnected = () => {
-  return mongoose.connection.readyState === 1;
-};
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -74,7 +61,7 @@ router.post(
         });
       }
 
-      const { name, email, password } = req.body;
+      const { name, email, password, role = "student" } = req.body;
 
       // Check if user already exists
       const existingUser = await User.findOne({ email });
@@ -85,12 +72,21 @@ router.post(
         });
       }
 
+      // Validate role
+      const validRoles = ["student", "mentor"];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid role. Must be 'student' or 'mentor'",
+        });
+      }
+
       // Create new user (password will be hashed by pre-save hook)
       const user = new User({
         name,
         email,
         password,
-        role: "student",
+        role,
         isActive: true,
         isVerified: true,
         analytics: {
@@ -155,24 +151,26 @@ router.post(
         });
       }
 
-      const { email, password } = req.body;
+      const { email, password, role } = req.body;
 
-      let user;
+      // Ensure database connection is available
+      ensureDbConnection();
 
-      if (isDbConnected()) {
-        // Use MongoDB
-        user = await User.findOne({ email }).select("+password");
-      } else {
-        // Use mock users
-        console.log("Looking for user with email:", email);
-        user = await findUserByEmailWithPassword(email);
-        console.log("Found user:", user ? "Yes" : "No");
-      }
+      // Use MongoDB only
+      const user = await User.findOne({ email }).select("+password");
 
       if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "No user found in the system",
+        });
+      }
+
+      // Check if user role matches the requested role
+      if (role && user.role !== role) {
         return res.status(401).json({
           success: false,
-          message: "Invalid email or password",
+          message: `Invalid credentials for ${role} login`,
         });
       }
 
@@ -184,22 +182,18 @@ router.post(
         });
       }
 
-      // Compare password
-      const isPasswordValid = await comparePassword(password, user.password);
+      // Compare password using bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
-          message: "Invalid email or password",
+          message: "Invalid password",
         });
       }
 
       // Update last login
       user.lastLogin = new Date();
-      if (isDbConnected()) {
-        await user.save();
-      } else {
-        await updateUser(user.id, { lastLogin: new Date() });
-      }
+      await user.save();
 
       // Generate JWT token
       const token = jwt.sign(
@@ -232,13 +226,8 @@ router.post(
 // Get current user
 router.get("/me", authenticateToken, async (req, res) => {
   try {
-    let user;
-
-    if (isDbConnected()) {
-      user = await User.findById(req.user.id);
-    } else {
-      user = await findUserById(req.user.id);
-    }
+    // Use MongoDB only - remove dummy mode logic
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({

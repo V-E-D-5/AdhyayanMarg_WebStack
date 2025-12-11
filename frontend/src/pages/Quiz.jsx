@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Target, ArrowRight, ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
@@ -8,122 +9,131 @@ import LoadingSpinner from "../components/UI/LoadingSpinner";
 import apiService from "../utils/api";
 
 const Quiz = () => {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [quizStarted, setQuizStarted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState(null);
+  const [sessionId] = useState(
+    () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  );
 
-  // Basic 5 questions for non-logged users
+  // Basic 5 questions for non-logged users (matching backend IDs)
   const basicQuestions = [
     {
-      id: 1,
+      id: "mock_q1",
       question: "What type of work environment do you prefer?",
       options: [
-        { id: "a", text: "Team collaboration" },
-        { id: "b", text: "Independent work" },
-        { id: "c", text: "Fast-paced environment" },
-        { id: "d", text: "Creative and flexible" },
+        { id: "a", text: "Collaborative team environment" },
+        { id: "b", text: "Independent and quiet workspace" },
+        { id: "c", text: "Creative and flexible environment" },
+        { id: "d", text: "Fast-paced and challenging" },
       ],
     },
     {
-      id: 2,
+      id: "mock_q2",
+      question: "Which activity interests you most?",
+      options: [
+        { id: "a", text: "Solving complex problems" },
+        { id: "b", text: "Creating art or design" },
+        { id: "c", text: "Helping others" },
+        { id: "d", text: "Leading projects" },
+      ],
+    },
+    {
+      id: "mock_q3",
       question: "What motivates you most?",
       options: [
-        { id: "a", text: "Solving problems" },
-        { id: "b", text: "Helping others" },
-        { id: "c", text: "Learning new things" },
-        { id: "d", text: "Leading teams" },
+        { id: "a", text: "Achieving technical excellence" },
+        { id: "b", text: "Expressing creativity" },
+        { id: "c", text: "Making a positive impact" },
+        { id: "d", text: "Building and leading teams" },
       ],
     },
     {
-      id: 3,
-      question: "What is your ideal work schedule?",
+      id: "mock_q4",
+      question: "What type of learning do you prefer?",
       options: [
-        { id: "a", text: "Regular 9-5" },
-        { id: "b", text: "Flexible hours" },
-        { id: "c", text: "Project deadlines" },
-        { id: "d", text: "Part-time work" },
+        { id: "a", text: "Hands-on experimentation" },
+        { id: "b", text: "Visual and creative learning" },
+        { id: "c", text: "Collaborative group learning" },
+        { id: "d", text: "Independent research" },
       ],
     },
     {
-      id: 4,
-      question: "What type of tasks do you enjoy?",
+      id: "mock_q5",
+      question: "What type of challenges do you enjoy?",
       options: [
-        { id: "a", text: "Analytical work" },
-        { id: "b", text: "Creative design" },
-        { id: "c", text: "Communication" },
-        { id: "d", text: "Technical work" },
-      ],
-    },
-    {
-      id: 5,
-      question: "What is your career goal?",
-      options: [
-        { id: "a", text: "Become an expert" },
-        { id: "b", text: "Lead teams" },
-        { id: "c", text: "Start business" },
-        { id: "d", text: "Make impact" },
+        { id: "a", text: "Technical and logical problems" },
+        { id: "b", text: "Creative challenges" },
+        { id: "c", text: "Social and communication challenges" },
+        { id: "d", text: "Strategic planning challenges" },
       ],
     },
   ];
 
   // Extended 15 questions for logged-in users (includes basic 5 + 10 more)
   const extendedQuestions = [
-    ...basicQuestions, // First 5 questions
+    ...basicQuestions, // First 5 questions (mock_q1 to mock_q5)
     {
-      id: 6,
-      question: "How do you prefer to learn new skills?",
+      id: "detailed_q6",
+      question: "What is your ideal work schedule?",
       options: [
-        { id: "a", text: "Through hands-on practice" },
-        { id: "b", text: "Reading documentation and tutorials" },
-        { id: "c", text: "Working with a mentor" },
-        { id: "d", text: "Taking structured courses" },
+        { id: "a", text: "Traditional 9-5 with clear boundaries" },
+        { id: "b", text: "Flexible hours with remote work" },
+        { id: "c", text: "Variable schedule with travel" },
+        { id: "d", text: "Intensive periods with breaks" },
       ],
     },
     {
-      id: 7,
-      question: "What type of challenges do you enjoy most?",
+      id: "detailed_q7",
+      question: "What type of problems do you find most satisfying to solve?",
       options: [
-        { id: "a", text: "Technical problem-solving" },
-        { id: "b", text: "Creative design challenges" },
-        { id: "c", text: "Interpersonal situations" },
-        { id: "d", text: "Strategic planning" },
+        { id: "a", text: "Data analysis and finding patterns" },
+        { id: "b", text: "Design problems requiring aesthetics" },
+        { id: "c", text: "Interpersonal conflicts and team dynamics" },
+        { id: "d", text: "Strategic business problems" },
       ],
     },
     {
-      id: 8,
-      question: "How do you handle deadlines?",
+      id: "detailed_q8",
+      question: "How do you prefer to handle feedback?",
       options: [
-        { id: "a", text: "Plan ahead and work systematically" },
-        { id: "b", text: "Work best under pressure" },
-        { id: "c", text: "Collaborate with others to meet deadlines" },
-        { id: "d", text: "Delegate tasks to team members" },
+        { id: "a", text: "Receive detailed written feedback" },
+        { id: "b", text: "Get visual demonstrations" },
+        { id: "c", text: "Have one-on-one conversations" },
+        { id: "d", text: "Participate in group discussions" },
       ],
     },
     {
-      id: 9,
-      question: "What motivates you to work harder?",
+      id: "detailed_q9",
+      question:
+        "What type of work environment brings out your best performance?",
       options: [
-        { id: "a", text: "Solving complex problems" },
-        { id: "b", text: "Creating something beautiful" },
-        { id: "c", text: "Helping others succeed" },
-        { id: "d", text: "Leading a team to victory" },
+        {
+          id: "a",
+          text: "Quiet, focused environment with minimal distractions",
+        },
+        { id: "b", text: "Creative space with inspiring visuals" },
+        { id: "c", text: "Collaborative space with team interaction" },
+        { id: "d", text: "Dynamic environment with leadership opportunities" },
       ],
     },
     {
-      id: 10,
-      question: "How do you prefer to communicate ideas?",
+      id: "detailed_q10",
+      question: "How do you approach learning new technologies?",
       options: [
-        { id: "a", text: "Through data and charts" },
-        { id: "b", text: "Through visual presentations" },
-        { id: "c", text: "Through face-to-face discussions" },
-        { id: "d", text: "Through written reports" },
+        { id: "a", text: "Read technical documentation thoroughly" },
+        { id: "b", text: "Experiment with hands-on projects" },
+        { id: "c", text: "Learn through team collaboration" },
+        { id: "d", text: "Take structured courses and certifications" },
       ],
     },
     {
-      id: 11,
+      id: "detailed_q11",
       question: "What type of feedback do you value most?",
       options: [
         { id: "a", text: "Detailed technical feedback" },
@@ -133,7 +143,7 @@ const Quiz = () => {
       ],
     },
     {
-      id: 12,
+      id: "detailed_q12",
       question: "How do you approach failure?",
       options: [
         { id: "a", text: "Analyze what went wrong systematically" },
@@ -143,7 +153,7 @@ const Quiz = () => {
       ],
     },
     {
-      id: 13,
+      id: "detailed_q13",
       question: "What type of team role do you naturally take?",
       options: [
         { id: "a", text: "Technical expert and problem solver" },
@@ -153,7 +163,7 @@ const Quiz = () => {
       ],
     },
     {
-      id: 14,
+      id: "detailed_q14",
       question: "How do you prefer to measure success?",
       options: [
         { id: "a", text: "Through quantitative metrics and data" },
@@ -163,7 +173,7 @@ const Quiz = () => {
       ],
     },
     {
-      id: 15,
+      id: "detailed_q15",
       question: "What type of work-life balance do you prefer?",
       options: [
         { id: "a", text: "Focused work blocks with clear boundaries" },
@@ -188,35 +198,32 @@ const Quiz = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // Quiz completed - save results if logged in
-      if (isAuthenticated) {
-        setIsSubmitting(true);
-        try {
-          const personalityResult = calculatePersonalityType();
-          const insights = getPersonalityInsights(personalityResult.type);
+      // Quiz completed - save results for both authenticated and guest users
+      setIsSubmitting(true);
+      try {
+        // Calculate completion time
+        const completionTime = quizStartTime
+          ? Math.floor((Date.now() - quizStartTime) / 1000)
+          : 300;
 
-          const quizData = {
-            answers: Object.keys(answers).map((questionId) => ({
-              questionId: parseInt(questionId),
-              answerId: answers[questionId],
-            })),
-            personalityType: personalityResult.type,
-            scores: personalityResult.scores,
-            strengths: insights.strengths,
-            careerPaths: insights.careerPaths,
-            workEnvironment: insights.workEnvironment,
-            quizType: isAuthenticated ? "detailed" : "mock",
-            userType: isAuthenticated ? "authenticated" : "guest",
-          };
+        // Prepare quiz data in the format expected by backend
+        const quizData = {
+          answers: Object.keys(answers).map((questionId) => ({
+            questionId: questionId, // Keep as string to match backend expectations
+            selectedOption: answers[questionId], // Use selectedOption instead of answerId
+          })),
+          completionTime: completionTime,
+          sessionId: sessionId, // Include session ID for guest users
+        };
 
-          await apiService.submitQuiz(quizData);
-          console.log("✅ Quiz results saved to database");
-        } catch (error) {
-          console.error("❌ Failed to save quiz results:", error);
-          // Still show results even if save fails
-        } finally {
-          setIsSubmitting(false);
-        }
+        console.log("Submitting quiz data:", quizData);
+        const response = await apiService.submitQuiz(quizData);
+        console.log("✅ Quiz results saved to database:", response.data);
+      } catch (error) {
+        console.error("❌ Failed to save quiz results:", error);
+        // Still show results even if save fails
+      } finally {
+        setIsSubmitting(false);
       }
       setShowResults(true);
     }
@@ -439,6 +446,7 @@ const Quiz = () => {
     setQuizStarted(true);
     setCurrentQuestion(0);
     setAnswers({});
+    setQuizStartTime(Date.now()); // Track quiz start time
   };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -458,30 +466,34 @@ const Quiz = () => {
               </div>
 
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                {isAuthenticated ? "Detailed Career Assessment" : "Career Quiz"}
+                {isAuthenticated
+                  ? t("quiz.detailedAssessment")
+                  : t("quiz.quickQuiz")}
               </h1>
 
               <p className="text-gray-600 dark:text-gray-300 mb-8">
                 {isAuthenticated
-                  ? "Take our comprehensive assessment to get detailed career insights and personalized recommendations saved to your profile."
-                  : "Take our quick quiz to discover your career personality and get personalized recommendations."}
+                  ? t("quiz.comprehensiveDescription")
+                  : t("quiz.quickDescription")}
               </p>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-8">
                 <div className="flex justify-center items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
                   <div className="flex items-center">
                     <span className="font-medium">
-                      {questions.length} Questions
+                      {questions.length} {t("quiz.questions")}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium">
-                      {isAuthenticated ? "8-12 Minutes" : "3-5 Minutes"}
+                      {isAuthenticated ? "8-12" : "3-5"} {t("quiz.minutes")}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium">
-                      {isAuthenticated ? "Saved Results" : "Free Results"}
+                      {isAuthenticated
+                        ? t("quiz.savedResults")
+                        : t("quiz.freeResults")}
                     </span>
                   </div>
                 </div>
@@ -492,16 +504,16 @@ const Quiz = () => {
                 onClick={startQuiz}
                 className="min-h-[52px] text-lg px-8"
               >
-                {isAuthenticated ? "Start Assessment" : "Start Quiz"}
+                {isAuthenticated ? t("quiz.startAssessment") : t("quiz.start")}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
 
               {!isAuthenticated && (
                 <p className="text-sm text-gray-500 mt-4">
                   <a href="/login" className="text-blue-600 hover:underline">
-                    Sign up
+                    {t("auth.createAccount")}
                   </a>{" "}
-                  for detailed insights and career recommendations
+                  {t("quiz.signUpPrompt")}
                 </p>
               )}
             </Card>
@@ -712,9 +724,12 @@ const Quiz = () => {
           <div className="mb-8">
             <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
               <span>
-                Question {currentQuestion + 1} of {questions.length}
+                {t("quiz.question")} {currentQuestion + 1} {t("quiz.of")}{" "}
+                {questions.length}
               </span>
-              <span>{Math.round(progress)}% Complete</span>
+              <span>
+                {Math.round(progress)}% {t("common.completed")}
+              </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <motion.div
@@ -766,13 +781,13 @@ const Quiz = () => {
                 {isSubmitting ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
-                    Saving...
+                    {t("quiz.saving")}
                   </>
                 ) : (
                   <>
                     {currentQuestion === questions.length - 1
-                      ? "Finish"
-                      : "Next"}
+                      ? t("quiz.submit")
+                      : t("quiz.next")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

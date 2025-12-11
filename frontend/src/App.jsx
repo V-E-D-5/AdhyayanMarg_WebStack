@@ -4,6 +4,7 @@ import Layout from "./components/Layout/Layout";
 import LoadingSpinner from "./components/UI/LoadingSpinner";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AdminProtectedRoute from "./components/Auth/AdminProtectedRoute";
+import RoleProtectedRoute from "./components/Auth/RoleProtectedRoute";
 import ThemeFavicon from "./components/ThemeFavicon";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -17,6 +18,7 @@ const Roadmap = React.lazy(() => import("./pages/Roadmap"));
 const Colleges = React.lazy(() => import("./pages/Colleges"));
 const Chatbot = React.lazy(() => import("./pages/Chatbot"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const MentorPortal = React.lazy(() => import("./pages/MentorPortal"));
 const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 
@@ -29,7 +31,7 @@ function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/" element={<Layout />}>
                 <Route index element={<Home />} />
                 <Route path="quiz" element={<Quiz />} />
@@ -39,9 +41,17 @@ function App() {
                 <Route
                   path="dashboard"
                   element={
-                    <ProtectedRoute>
+                    <RoleProtectedRoute allowedRoles={["student"]}>
                       <Dashboard />
-                    </ProtectedRoute>
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="mentor"
+                  element={
+                    <RoleProtectedRoute allowedRoles={["mentor"]}>
+                      <MentorPortal />
+                    </RoleProtectedRoute>
                   }
                 />
                 <Route

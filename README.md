@@ -22,21 +22,25 @@ SIH/
 ### Backend Setup
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Create environment file:
+
    ```bash
    cp env.example .env
    ```
 
 4. Update `.env` with your configuration:
+
    ```env
    PORT=5000
    NODE_ENV=development
@@ -54,21 +58,25 @@ The backend will be available at `http://localhost:5000`
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
+
    ```bash
    cd frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Create environment file:
+
    ```bash
    cp env.example .env
    ```
 
 4. Update `.env` with your configuration:
+
    ```env
    VITE_API_URL=http://localhost:5000/api
    VITE_APP_NAME=Career Guidance Platform
@@ -84,8 +92,9 @@ The frontend will be available at `http://localhost:5173`
 ## 📁 Project Features
 
 ### Frontend Features
+
 - **Home Page**: Landing page with feature overview and call-to-action
-- **Career Quiz**: Interactive assessment with personality analysis
+- **Know-Me**: Interactive assessment with personality analysis
 - **Roadmap**: Detailed career path guides with timelines
 - **Colleges**: College finder with comparison functionality
 - **Success Stories**: Alumni stories and testimonials
@@ -96,6 +105,7 @@ The frontend will be available at `http://localhost:5173`
 - **Responsive Design**: Mobile-first approach
 
 ### Backend Features
+
 - **RESTful API**: Well-structured endpoints
 - **Quiz System**: Career assessment with scoring
 - **Roadmap Management**: Course and career path data
@@ -110,6 +120,7 @@ The frontend will be available at `http://localhost:5173`
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 18**: Modern React with hooks
 - **Vite**: Fast build tool and dev server
 - **Tailwind CSS**: Utility-first CSS framework
@@ -121,6 +132,7 @@ The frontend will be available at `http://localhost:5173`
 - **Lucide React**: Icon library
 
 ### Backend
+
 - **Node.js**: JavaScript runtime
 - **Express.js**: Web framework
 - **Mongoose**: MongoDB object modeling
@@ -134,16 +146,19 @@ The frontend will be available at `http://localhost:5173`
 ## 📊 API Endpoints
 
 ### Quiz
+
 - `POST /api/quiz` - Submit quiz results
 - `GET /api/quiz/results` - Get user quiz results
 
 ### Roadmap
+
 - `GET /api/roadmap` - Get all roadmaps
 - `GET /api/roadmap/:course` - Get specific roadmap
 - `GET /api/roadmap/search` - Search roadmaps
 - `GET /api/roadmap/categories` - Get categories
 
 ### Colleges
+
 - `GET /api/colleges` - Get all colleges
 - `GET /api/colleges/:id` - Get specific college
 - `GET /api/colleges/search` - Search colleges
@@ -151,6 +166,7 @@ The frontend will be available at `http://localhost:5173`
 - `GET /api/colleges/stats` - Get statistics
 
 ### Stories
+
 - `GET /api/stories` - Get all stories
 - `GET /api/stories/:id` - Get specific story
 - `GET /api/stories/search` - Search stories
@@ -159,6 +175,7 @@ The frontend will be available at `http://localhost:5173`
 - `POST /api/stories/:id/comments` - Add comment
 
 ### FAQ
+
 - `GET /api/faq` - Get all FAQs
 - `GET /api/faq/:id` - Get specific FAQ
 - `GET /api/faq/search` - Search FAQs
@@ -166,6 +183,7 @@ The frontend will be available at `http://localhost:5173`
 - `POST /api/faq/:id/helpful` - Mark FAQ as helpful
 
 ### Analytics
+
 - `GET /api/analytics` - Get dashboard data
 - `GET /api/analytics/engagement` - Get engagement metrics
 - `GET /api/analytics/performance` - Get performance data
@@ -174,31 +192,37 @@ The frontend will be available at `http://localhost:5173`
 ## 🗄️ Database Models
 
 ### User
+
 - Personal information and preferences
 - Quiz results and progress
 - Authentication data
 
 ### QuizResult
+
 - User answers and scores
 - Personality analysis
 - Recommended courses
 
 ### Roadmap
+
 - Course information and timelines
 - Career paths and resources
 - Market demand data
 
 ### College
+
 - Institution details and rankings
 - Courses and facilities
 - Placement statistics
 
 ### Story
+
 - Alumni success stories
 - Career journeys and advice
 - User engagement metrics
 
 ### FAQ
+
 - Question and answer pairs
 - Categories and tags
 - Helpfulness ratings
@@ -206,12 +230,14 @@ The frontend will be available at `http://localhost:5173`
 ## 🌐 Deployment
 
 ### Backend Deployment
+
 1. Set up MongoDB Atlas or local MongoDB
 2. Configure environment variables
 3. Deploy to platforms like Heroku, Railway, or AWS
 4. Set up CORS for frontend domain
 
 ### Frontend Deployment
+
 1. Build the production bundle: `npm run build`
 2. Deploy to platforms like Vercel, Netlify, or AWS S3
 3. Configure environment variables
@@ -220,6 +246,7 @@ The frontend will be available at `http://localhost:5173`
 ## 🔧 Development
 
 ### Code Structure
+
 - **Components**: Reusable UI components
 - **Pages**: Route-level components
 - **Hooks**: Custom React hooks
@@ -228,6 +255,7 @@ The frontend will be available at `http://localhost:5173`
 - **Context**: Global state management
 
 ### Best Practices
+
 - Component-based architecture
 - Responsive design principles
 - Accessibility considerations
@@ -281,6 +309,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For support and questions:
+
 - Create an issue in the repository
 - Check the documentation
 - Review the API endpoints

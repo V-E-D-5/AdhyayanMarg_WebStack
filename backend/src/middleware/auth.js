@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const { findUserById } = require("../data/mockUsers");
 const mongoose = require("mongoose");
 
 // Middleware to authenticate JWT tokens
@@ -22,15 +21,8 @@ const authenticateToken = async (req, res, next) => {
       process.env.JWT_SECRET || "your-secret-key"
     );
 
-    // Find the user - check if database is connected
-    let user;
-    if (mongoose.connection.readyState === 1) {
-      // Database connected - use MongoDB
-      user = await User.findById(decoded.id).select("-password");
-    } else {
-      // Database not connected - use mock users
-      user = await findUserById(decoded.id);
-    }
+    // Find the user in MongoDB
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
       return res.status(401).json({
@@ -111,15 +103,8 @@ const authenticateOptional = async (req, res, next) => {
       process.env.JWT_SECRET || "your-secret-key"
     );
 
-    // Find the user - check if database is connected
-    let user;
-    if (mongoose.connection.readyState === 1) {
-      // Database connected - use MongoDB
-      user = await User.findById(decoded.id).select("-password");
-    } else {
-      // Database not connected - use mock users
-      user = await findUserById(decoded.id);
-    }
+    // Find the user in MongoDB
+    const user = await User.findById(decoded.id).select("-password");
 
     if (user) {
       // Add user info to request object
@@ -161,15 +146,8 @@ const authenticateRequired = async (req, res, next) => {
       process.env.JWT_SECRET || "your-secret-key"
     );
 
-    // Find the user - check if database is connected
-    let user;
-    if (mongoose.connection.readyState === 1) {
-      // Database connected - use MongoDB
-      user = await User.findById(decoded.id).select("-password");
-    } else {
-      // Database not connected - use mock users
-      user = await findUserById(decoded.id);
-    }
+    // Find the user in MongoDB
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
       return res.status(401).json({

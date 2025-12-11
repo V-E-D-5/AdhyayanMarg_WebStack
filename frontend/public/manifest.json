@@ -1,6 +1,6 @@
 {
-  "name": "AdhyayanMarg - Career Guidance Platform",
-  "short_name": "AdhyayanMarg",
+  "name": "Yukti - Career Guidance Platform",
+  "short_name": "Yukti",
   "description": "Your comprehensive career guidance platform for students and professionals",
   "start_url": "/",
   "display": "standalone",
@@ -24,6 +24,18 @@
       "src": "/favicon.svg",
       "sizes": "32x32",
       "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
       "purpose": "any"
     }
   ],

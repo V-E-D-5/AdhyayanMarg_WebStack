@@ -26,8 +26,13 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["student", "admin", "counselor"],
+    enum: ["student", "mentor", "admin", "counselor"],
     default: "student",
+  },
+  mentorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
   },
   profile: {
     age: Number,

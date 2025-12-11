@@ -26,6 +26,8 @@ i18n
     resources,
     fallbackLng: "en",
     debug: import.meta.env.VITE_DEBUG === "true",
+    lng: "en", // Set default language
+    load: "languageOnly", // Only load language, not region
 
     interpolation: {
       escapeValue: false, // React already does escaping
@@ -34,11 +36,23 @@ i18n
     detection: {
       order: ["localStorage", "navigator", "htmlTag"],
       caches: ["localStorage"],
+      lookupLocalStorage: "i18nextLng",
     },
 
     react: {
       useSuspense: false,
+      bindI18n: "languageChanged loaded",
+      bindI18nStore: "added removed",
+      transEmptyNodeValue: "",
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p"],
     },
+
+    // Performance optimizations
+    saveMissing: false,
+    missingKeyHandler: false,
+    keySeparator: ".",
+    nsSeparator: false,
   });
 
 export default i18n;

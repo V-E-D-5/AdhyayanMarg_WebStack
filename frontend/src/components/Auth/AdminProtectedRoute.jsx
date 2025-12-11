@@ -16,8 +16,8 @@ const AdminProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to admin login page with return url
-    return <Navigate to="/admin-login" state={{ from: location }} replace />;
+    // Redirect to unified login page with return url
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (user?.role !== "admin") {

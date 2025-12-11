@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
 import Input from "../components/UI/Input";
@@ -9,6 +10,7 @@ import { apiService } from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const AdminLogin = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -66,16 +68,37 @@ const AdminLogin = () => {
           setLoading(false);
           return;
         }
+
+        // Store token and update auth context
         localStorage.setItem("authToken", response.data.token);
         login(response.data.user);
-        navigate("/admin");
+
+        // Clear any existing errors before navigation
+        setErrors({});
+
+        // Add a small delay to ensure auth context is updated
+        setTimeout(() => {
+          navigate("/admin");
+        }, 100);
       } else {
         setErrors({ general: response.data.message });
       }
     } catch (error) {
       console.error("Admin login error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Network error. Please try again.";
+      let errorMessage = "Network error. Please try again.";
+
+      if (error.response?.status === 401) {
+        if (error.response?.data?.message?.includes("password")) {
+          errorMessage = "Invalid password";
+        } else if (error.response?.data?.message?.includes("user")) {
+          errorMessage = "No user found with this email";
+        } else {
+          errorMessage = "Invalid credentials";
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
@@ -106,7 +129,7 @@ const AdminLogin = () => {
               <Shield className="w-10 h-10 text-white" />
             </motion.div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-              Admin Portal
+              {t("admin.title")} Portal
             </h1>
             <p className="text-gray-600 dark:text-gray-300 text-lg">
               Secure access to administrative controls
@@ -126,7 +149,7 @@ const AdminLogin = () => {
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Admin Email
+                {t("auth.email")}
               </label>
               <Input
                 type="email"
@@ -186,7 +209,7 @@ const AdminLogin = () => {
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  Access Admin Dashboard
+                  {t("auth.signIn")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </div>
               )}

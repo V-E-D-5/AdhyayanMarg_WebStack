@@ -368,7 +368,7 @@ const Footer = () => {
                   />
                 </svg>
               </div>
-              <span className="text-xl font-bold">AdhyayanMarg</span>
+              <span className="text-xl font-bold">Yukti</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm text-sm sm:text-base leading-relaxed">
               Your comprehensive career guidance platform. Discover your
@@ -472,7 +472,7 @@ const Footer = () => {
         <div className="py-6 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center space-x-2 text-gray-400 text-sm mb-4 md:mb-0">
             <span>
-              © {currentYear} AdhyayanMarg. {t("footer.rights")}
+              © {currentYear} Yukti. {t("footer.rights")}
             </span>
             <Heart className="w-4 h-4 text-red-500" />
           </div>

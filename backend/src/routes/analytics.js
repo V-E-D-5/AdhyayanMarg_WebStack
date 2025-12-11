@@ -3,14 +3,11 @@ const router = express.Router();
 const {
   getUserAnalytics,
   updateUserAnalytics,
-  resetUserAnalytics,
   requireAdmin,
   getAdminDashboard,
-  getAllUsers,
-  getUserById,
+  getUsersList,
+  getUserDetails,
   updateUserStatus,
-  deleteUser,
-  getSystemHealth,
 } = require("../controllers/analyticsController");
 const { authenticateToken } = require("../middleware/auth");
 
@@ -24,10 +21,7 @@ router.get("/user", authenticateToken, getUserAnalytics);
 // @access  Private
 router.post("/user/update", authenticateToken, updateUserAnalytics);
 
-// @route   POST /api/analytics/user/reset
-// @desc    Reset user analytics to 0
-// @access  Private
-router.post("/user/reset", authenticateToken, resetUserAnalytics);
+// Removed resetUserAnalytics route - not implemented
 
 // Admin Routes
 // @route   GET /api/analytics/admin/dashboard
@@ -43,7 +37,7 @@ router.get(
 // @route   GET /api/analytics/admin/users
 // @desc    Get all users with pagination and filtering
 // @access  Private (Admin only)
-router.get("/admin/users", authenticateToken, requireAdmin, getAllUsers);
+router.get("/admin/users", authenticateToken, requireAdmin, getUsersList);
 
 // @route   GET /api/analytics/admin/users/:userId
 // @desc    Get specific user details
@@ -52,7 +46,7 @@ router.get(
   "/admin/users/:userId",
   authenticateToken,
   requireAdmin,
-  getUserById
+  getUserDetails
 );
 
 // @route   PUT /api/analytics/admin/users/:userId
@@ -65,24 +59,6 @@ router.put(
   updateUserStatus
 );
 
-// @route   DELETE /api/analytics/admin/users/:userId
-// @desc    Delete user
-// @access  Private (Admin only)
-router.delete(
-  "/admin/users/:userId",
-  authenticateToken,
-  requireAdmin,
-  deleteUser
-);
-
-// @route   GET /api/analytics/admin/system-health
-// @desc    Get system health and performance metrics
-// @access  Private (Admin only)
-router.get(
-  "/admin/system-health",
-  authenticateToken,
-  requireAdmin,
-  getSystemHealth
-);
+// Removed delete user and system health routes - not implemented
 
 module.exports = router;

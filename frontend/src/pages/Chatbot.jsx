@@ -53,6 +53,7 @@ const Chatbot = () => {
   const inputRef = useRef(null);
   const chatContainerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
+  const scrollDebounceRef = useRef(null);
 
   const suggestedQuestions = [
     "What are the best engineering colleges in India?",
@@ -89,7 +90,7 @@ const Chatbot = () => {
           timestamp: new Date(),
           helpful: response.data.data.found || false,
           relatedQuestions: response.data.data.relatedQuestions || [],
-          aiProvider: response.data.data.aiProvider || "AdhyayanMarg Assistant",
+          aiProvider: response.data.data.aiProvider || "Yukti Assistant",
           aiModel: response.data.data.aiModel || "Enhanced Knowledge Base",
         };
         setMessages((prev) => [...prev, botResponse]);
@@ -121,8 +122,9 @@ const Chatbot = () => {
   });
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   };
 
@@ -132,41 +134,52 @@ const Chatbot = () => {
     if (autoScrollEnabled && messages.length > 0 && !isUserScrolling) {
       const timer = setTimeout(() => {
         scrollToBottom();
-      }, 50); // Reduced delay for faster response
+      }, 100); // Slightly increased delay for smoother scrolling
       return () => clearTimeout(timer);
     }
-  }, [messages.length, autoScrollEnabled, isUserScrolling]); // Include all dependencies
+  }, [messages.length, autoScrollEnabled, isUserScrolling]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (scrollDebounceRef.current) {
+        clearTimeout(scrollDebounceRef.current);
+      }
     };
   }, []);
 
-  // Enhanced scroll detection for better auto-scroll behavior
+  // Enhanced scroll detection for better auto-scroll behavior with debouncing
   const handleScroll = () => {
-    if (chatContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        chatContainerRef.current;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 10; // More precise threshold
-
-      // Mark that user is actively scrolling
-      setIsUserScrolling(true);
-      setAutoScrollEnabled(isAtBottom);
-
-      // Clear previous timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      // Set timeout to mark scrolling as finished
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsUserScrolling(false);
-      }, 100); // Reduced timeout for more responsive behavior
+    // Clear previous debounce timeout
+    if (scrollDebounceRef.current) {
+      clearTimeout(scrollDebounceRef.current);
     }
+
+    // Debounce scroll handling to prevent multiple updates
+    scrollDebounceRef.current = setTimeout(() => {
+      if (chatContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } =
+          chatContainerRef.current;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 50; // Increased threshold for better UX
+
+        // Mark that user is actively scrolling
+        setIsUserScrolling(true);
+        setAutoScrollEnabled(isAtBottom);
+
+        // Clear previous timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+
+        // Set timeout to mark scrolling as finished
+        scrollTimeoutRef.current = setTimeout(() => {
+          setIsUserScrolling(false);
+        }, 150); // Increased timeout for more stable behavior
+      }
+    }, 50); // Debounce scroll events by 50ms
   };
 
   const handleSendMessage = async () => {
@@ -186,6 +199,14 @@ const Chatbot = () => {
     // Enable auto-scroll when user sends a message
     setAutoScrollEnabled(true);
     setIsUserScrolling(false);
+
+    // Clear any pending scroll timeouts to ensure clean state
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    if (scrollDebounceRef.current) {
+      clearTimeout(scrollDebounceRef.current);
+    }
 
     // Prepare query data with AI settings
     const queryData = {
@@ -429,14 +450,18 @@ const Chatbot = () => {
                 className={`${
                   isFullscreen
                     ? "flex-1 flex flex-col"
-                    : "h-[700px] flex flex-col"
+                    : "h-[600px] flex flex-col"
                 } shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm`}
               >
                 {/* Messages */}
                 <div
                   ref={chatContainerRef}
                   onScroll={handleScroll}
-                  className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                  className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                  style={{
+                    maxHeight: isFullscreen ? "calc(100vh - 200px)" : "480px",
+                    minHeight: isFullscreen ? "calc(100vh - 200px)" : "480px",
+                  }}
                 >
                   <AnimatePresence>
                     {messages.map((message) => (
@@ -673,6 +698,13 @@ const Chatbot = () => {
                         onClick={() => {
                           setAutoScrollEnabled(true);
                           setIsUserScrolling(false);
+                          // Clear any pending scroll timeouts
+                          if (scrollTimeoutRef.current) {
+                            clearTimeout(scrollTimeoutRef.current);
+                          }
+                          if (scrollDebounceRef.current) {
+                            clearTimeout(scrollDebounceRef.current);
+                          }
                           scrollToBottom();
                         }}
                         className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
@@ -687,7 +719,7 @@ const Chatbot = () => {
                 </div>
 
                 {/* Input */}
-                <div className="p-6 border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50">
+                <div className="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50">
                   <div className="flex space-x-3">
                     <Input
                       ref={inputRef}
@@ -705,7 +737,7 @@ const Chatbot = () => {
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
                     <span>Press Enter to send, Shift+Enter for new line</span>
                     <span>{inputMessage.length}/1000</span>
                   </div>
@@ -718,9 +750,15 @@ const Chatbot = () => {
               className={`${
                 isFullscreen ? "w-80 flex-shrink-0" : "lg:col-span-1"
               }`}
+              style={{
+                position: isFullscreen ? "sticky" : "relative",
+                top: isFullscreen ? "20px" : "auto",
+                height: isFullscreen ? "calc(100vh - 40px)" : "580px",
+                overflowY: "auto",
+              }}
             >
-              <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-                <h3 className="heading-4 mb-4 flex items-center gap-2">
+              <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4">
+                <h3 className="heading-4 mb-3 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-blue-600" />
                   {t("chatbot.suggestions")}
                 </h3>
@@ -739,8 +777,8 @@ const Chatbot = () => {
                 </div>
               </Card>
 
-              <Card className="mt-6 shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-                <h3 className="heading-4 mb-4 flex items-center gap-2">
+              <Card className="mt-4 shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4">
+                <h3 className="heading-4 mb-3 flex items-center gap-2">
                   <Brain className="w-5 h-5 text-purple-600" />
                   Quick Tips
                 </h3>
@@ -773,8 +811,8 @@ const Chatbot = () => {
               </Card>
 
               {/* Chat Stats */}
-              <Card className="mt-6 shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-                <h3 className="heading-4 mb-4 flex items-center gap-2">
+              <Card className="mt-4 shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4">
+                <h3 className="heading-4 mb-3 flex items-center gap-2">
                   <Bot className="w-5 h-5 text-green-600" />
                   Chat Stats
                 </h3>

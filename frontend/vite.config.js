@@ -17,8 +17,8 @@ export default defineConfig({
         "icon-512.svg",
       ],
       manifest: {
-        name: "AdhyayanMarg - Career Guidance Platform",
-        short_name: "AdhyayanMarg",
+        name: "Yukti - Career Guidance Platform",
+        short_name: "Yukti",
         description: "Your comprehensive career guidance platform",
         theme_color: "#f59e0b",
         background_color: "#ffffff",
@@ -82,6 +82,13 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
@@ -89,8 +96,11 @@ export default defineConfig({
           router: ["react-router-dom"],
           charts: ["recharts"],
           i18n: ["react-i18next", "i18next"],
+          ui: ["framer-motion", "lucide-react"],
+          forms: ["react-hook-form", "react-hot-toast"],
         },
       },
     },
+    chunkSizeWarningLimit: 1000,
   },
 });

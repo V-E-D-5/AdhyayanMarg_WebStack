@@ -294,7 +294,7 @@ const submitFaqQuery = async (req, res) => {
             data: {
               found: true,
               answer: enhancedResponse.answer,
-              aiProvider: "AdhyayanMarg Assistant",
+              aiProvider: "Yukti Assistant",
               aiModel: "Enhanced Knowledge Base",
               relatedQuestions: enhancedResponse.relatedQuestions,
               suggestions: enhancedResponse.suggestions,
@@ -310,7 +310,7 @@ const submitFaqQuery = async (req, res) => {
           data: {
             found: true,
             answer: enhancedResponse.answer,
-            aiProvider: "AdhyayanMarg Assistant",
+            aiProvider: "Praniti Assistant",
             aiModel: "Enhanced Knowledge Base",
             relatedQuestions: enhancedResponse.relatedQuestions,
             suggestions: enhancedResponse.suggestions,
@@ -325,7 +325,7 @@ const submitFaqQuery = async (req, res) => {
         data: {
           found: true,
           answer: enhancedResponse.answer,
-          aiProvider: "AdhyayanMarg Assistant",
+          aiProvider: "Praniti Assistant",
           aiModel: "Enhanced Knowledge Base",
           relatedQuestions: enhancedResponse.relatedQuestions,
           suggestions: enhancedResponse.suggestions,
@@ -553,7 +553,7 @@ function generateEnhancedResponse(query) {
     queryLower.includes("hey")
   ) {
     return {
-      answer: `Hello! 👋 Welcome to AdhyayanMarg! I'm your career guidance assistant.
+      answer: `Hello! 👋 Welcome to Yukti! I'm your career guidance assistant.
 
 **I can help you with:**
 • College selection & admissions

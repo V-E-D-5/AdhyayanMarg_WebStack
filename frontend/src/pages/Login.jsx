@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, User, Mail, Lock, ArrowRight } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Lock,
+  ArrowRight,
+  GraduationCap,
+  Users,
+} from "lucide-react";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
 import Input from "../components/UI/Input";
@@ -19,6 +28,7 @@ const Login = () => {
   const from = location.state?.from?.pathname || "/dashboard";
 
   const [mode, setMode] = useState("login"); // "login" or "register"
+  const [userRole, setUserRole] = useState("student"); // "student" or "mentor"
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -96,12 +106,14 @@ const Login = () => {
         response = await apiService.login({
           email: formData.email,
           password: formData.password,
+          role: userRole,
         });
       } else {
         response = await apiService.register({
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          role: userRole,
         });
       }
 
@@ -112,8 +124,9 @@ const Login = () => {
         // Update auth context
         login(response.data.user);
 
-        // Redirect to intended destination or dashboard
-        navigate(from, { replace: true });
+        // Redirect based on role
+        const redirectPath = userRole === "mentor" ? "/mentor" : "/dashboard";
+        navigate(redirectPath, { replace: true });
       } else {
         setErrors({
           general: response.data.message || "Authentication failed",
@@ -121,8 +134,20 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Auth error:", error);
-      const errorMessage =
-        error.response?.data?.message || "Network error. Please try again.";
+      let errorMessage = "Network error. Please try again.";
+
+      if (error.response?.status === 401) {
+        if (error.response?.data?.message?.includes("password")) {
+          errorMessage = "Invalid password";
+        } else if (error.response?.data?.message?.includes("user")) {
+          errorMessage = "No user found with this email";
+        } else {
+          errorMessage = "Invalid credentials";
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
@@ -149,18 +174,58 @@ const Login = () => {
         className="w-full max-w-md sm:max-w-lg"
       >
         <Card className="p-6 sm:p-8 lg:p-10 shadow-2xl">
+          {/* Role Toggle */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
+              <button
+                type="button"
+                onClick={() => setUserRole("student")}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  userRole === "student"
+                    ? "bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 mr-2" />
+                Student
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserRole("mentor")}
+                className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  userRole === "mentor"
+                    ? "bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                }`}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Mentor
+              </button>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <User className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              {userRole === "student" ? (
+                <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              ) : (
+                <Users className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+              )}
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-              {mode === "login" ? t("auth.signIn") : t("auth.createAccount")}
+              {mode === "login"
+                ? `${userRole === "student" ? "Student" : "Mentor"} ${t(
+                    "auth.signIn"
+                  )}`
+                : `${userRole === "student" ? "Student" : "Mentor"} ${t(
+                    "auth.createAccount"
+                  )}`}
             </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed px-2">
-              {mode === "login"
-                ? t("auth.signInSubtitle")
-                : t("auth.createAccountSubtitle")}
+              {userRole === "student"
+                ? "Access your personalized career guidance dashboard"
+                : "Manage and guide your students' career journeys"}
             </p>
           </div>
 

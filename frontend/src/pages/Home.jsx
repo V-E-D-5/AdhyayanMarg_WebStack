@@ -54,7 +54,8 @@ const Home = () => {
     {
       icon: <MessageCircle className="w-8 h-8" />,
       title: "AI Career Counselor",
-      description: "Get personalized career guidance from our intelligent AI assistant",
+      description:
+        "Get personalized career guidance from our intelligent AI assistant",
       link: "/chatbot",
       color: "text-orange-600 bg-orange-100",
     },
@@ -196,7 +197,7 @@ const Home = () => {
       name: "Priya Sharma",
       role: "Software Engineer at Google",
       content:
-        "AdhyayanMarg helped me discover my passion for technology and guided me through the entire journey from college selection to landing my dream job.",
+        "Yukti helped me discover my passion for technology and guided me through the entire journey from college selection to landing my dream job.",
       rating: 5,
       image:
         "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
@@ -265,7 +266,7 @@ const Home = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
+              className="mt-8 lg:mt-0 lg:ml-8 xl:ml-12"
             >
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
                 <div className="space-y-4">
@@ -498,10 +499,11 @@ const Home = () => {
             className="text-center mb-16"
           >
             <h2 className="heading-2 mb-4 text-gray-900 dark:text-white">
-              How AdhyayanMarg Works
+              How Yukti Works
             </h2>
             <p className="text-body max-w-3xl mx-auto text-gray-600 dark:text-gray-300">
-              Our proven 3-step process helps you discover, plan, and achieve your career goals with confidence.
+              Our proven 3-step process helps you discover, plan, and achieve
+              your career goals with confidence.
             </p>
           </motion.div>
 
@@ -513,13 +515,16 @@ const Home = () => {
               className="text-center"
             >
               <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">1</span>
+                <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                  1
+                </span>
               </div>
               <h3 className="heading-4 mb-4 text-gray-900 dark:text-white">
                 Discover Your Path
               </h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                Take our comprehensive career assessment quiz to understand your interests, strengths, and personality type.
+                Take our comprehensive career assessment quiz to understand your
+                interests, strengths, and personality type.
               </p>
             </motion.div>
 
@@ -530,13 +535,16 @@ const Home = () => {
               className="text-center"
             >
               <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-green-600 dark:text-green-400">2</span>
+                <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  2
+                </span>
               </div>
               <h3 className="heading-4 mb-4 text-gray-900 dark:text-white">
                 Plan Your Journey
               </h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                Get detailed roadmaps, course recommendations, and step-by-step guidance tailored to your career goals.
+                Get detailed roadmaps, course recommendations, and step-by-step
+                guidance tailored to your career goals.
               </p>
             </motion.div>
 
@@ -547,13 +555,16 @@ const Home = () => {
               className="text-center"
             >
               <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
+                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  3
+                </span>
               </div>
               <h3 className="heading-4 mb-4 text-gray-900 dark:text-white">
                 Achieve Success
               </h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                Find the right colleges, apply for scholarships, and connect with opportunities that match your aspirations.
+                Find the right colleges, apply for scholarships, and connect
+                with opportunities that match your aspirations.
               </p>
             </motion.div>
           </div>
@@ -654,36 +665,36 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-4xl mx-auto">
               {isAuthenticated ? (
-                  <Link to="/dashboard">
+                <Link to="/dashboard">
+                  <Button
+                    size="lg"
+                    className="bg-white text-primary-600 hover:bg-gray-50 min-h-[52px] text-lg"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/quiz">
                     <Button
                       size="lg"
                       className="bg-white text-primary-600 hover:bg-gray-50 min-h-[52px] text-lg"
                     >
-                      Go to Dashboard
+                      Take Know-Me
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                   </Link>
-                ) : (
-                  <>
-                    <Link to="/quiz">
-                      <Button
-                        size="lg"
-                        className="bg-white text-primary-600 hover:bg-gray-50 min-h-[52px] text-lg"
-                      >
-                        Take Career Quiz
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-white text-white hover:bg-white hover:text-primary-600 min-h-[52px] text-lg"
-                      onClick={() => navigate("/login")}
-                    >
-                      Sign In to Get Started
-                    </Button>
-                  </>
-                )}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white hover:text-primary-600 min-h-[52px] text-lg"
+                    onClick={() => navigate("/login")}
+                  >
+                    Login/Signup to Get Started
+                  </Button>
+                </>
+              )}
               <Link to="/stories">
                 <Button
                   variant="outline"
